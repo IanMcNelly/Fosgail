@@ -1,6 +1,6 @@
 ![Fosgail Banner](assets/banner.png)
 
-> A lightweight, offline-first Markdown viewer and editor built with React + Tauri. A premium, bloat-free alternative to opening an IDE just to read a `.md` file.
+> A lightweight, offline Markdown viewer and editor built with React + Tauri. A premium, bloat-free alternative to opening an IDE just to read a `.md` file.
 
 [![CI](https://github.com/IanMcNelly/markdown-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/IanMcNelly/markdown-viewer/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-106%20passing-brightgreen)](#testing)
@@ -19,7 +19,7 @@
 - **Workspace Support** — open an entire folder of `.md` files
 - **Custom CSS Themes** — write your own markdown stylesheet live
 - **Zen Mode** — distraction-free fullscreen writing
-- **Offline-first** — zero network dependency, all data stays on disk
+- **Offline** — zero network dependency, all data stays on disk
 
 ---
 

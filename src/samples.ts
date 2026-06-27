@@ -11,7 +11,7 @@ export const INITIAL_FILES: MarkdownFile[] = [
     name: 'Welcome & Feature Tour.md',
     content: `# Welcome to Markdown Viewer! 🚀
 
-An **offline-first**, ultra-snappy markdown viewer and editor designed to streamline your development and documentation workflow. Whether you're reviewing AI-generated launch plans, reading technical tickets, or auditing documentation files, this application represents the exact distraction-free utility you need.
+An **offline**, ultra-snappy markdown viewer and editor designed to streamline your documentation workflow. Whether you're reviewing technical guides or auditing documentation files, this application represents the exact distraction-free utility you need.
 
 ---
 
@@ -56,7 +56,7 @@ Accelerate your workflow with these convenient hotkeys:
 This layout was designed with desktop packaging (such as **Electron** or **Tauri**) in mind. 
 To run this application as a native OSX or Windows application in your local system:
 
-1. **Download this repository** as a standard Vite + SPA project.
+1. **Download this repository** as a standard Vite project.
 2. Run \`npm i\` followed by:
    * **For Tauri**: \`npm run tauri init && npm run tauri dev\`
    * **For Electron**: Integrate electron-builder and point it to the \`dist/\` static bundle.
@@ -72,48 +72,44 @@ Enjoy a minimalist reading experience! Feel free to create new files or edit rig
     filePath: null,
   },
   {
-    id: 'example-ticket',
-    name: 'PROJ-942_AI_Auth_Spec.md',
-    content: `# Ticket: PROJ-942 — Firebase authentication & database security layout
+    id: 'example-guide',
+    name: 'Markdown Tips.md',
+    content: `# Markdown Formatting Tips
 
-**Status:** \`IN_REVIEW\`  
-**Assignee:** \`Dev team / Gemini-3.5\`  
-**Tags:** \`Security\`, \`Backend\`, \`Sprint-12\`
+Markdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents. 
 
 ---
 
-## 📝 Specifications Scope
+## 📝 Text Formatting
 
-We need to implement a full-stack authorization sequence for dynamic client registration. This ticket specifies the Firestore path parameters and baseline rules.
+You can easily format text to emphasize important information:
+- **Bold text** is created using double asterisks: \`**text**\`
+- *Italic text* is created using single asterisks: \`*text*\`
+- ~~Strikethrough~~ is created using double tildes: \`~~text~~\`
 
-### ✔️ Checklist items
-- [x] Configure Firebase initialization hook in SPA root.
-- [x] Define security rule block for \`/users/{userId}\` documents.
-- [ ] Implement multi-tenant lookup filter.
-- [ ] Conduct automated fuzzing over database tokens.
+## 📊 Working with Lists
 
-## 📊 Database Document Schema Layout
+### Unordered Lists
+- Apples
+- Oranges
+- Bananas
 
-The registry paths rely on the following model blueprint definition:
+### Task Lists
+- [x] Write documentation
+- [ ] Review formatting
+- [ ] Publish guide
 
-| Column | Type | Nullable | Description |
-| :--- | :--- | :---: | :--- |
-| **id** | \`string\` | No | Unique generated UUID. |
-| **displayName** | \`string\` | Yes | Custom profile string representation. |
-| **accessRole** | \`enum\` | No | Auth permissions check: \`ADMIN\`, \`COLLEGIATE\`, \`READ_ONLY\`. |
-| **createdAt** | \`timestamp\` | No | Epoch creation registration marker. |
+## 💡 Pro Tip
 
-## 💡 Engineering Blockquote Guideline
+> "The best documentation is written with the reader's perspective in mind. Keep it clear, concise, and structured."
 
-> "Authentication endpoints must always act conservatively. When the security policy changes, ensure all rules are fully loaded before allowing high-throughput database modifications."
-
-Use the companion code showcase tab to audit active rule validation blocks. Custom css themes might render table cells and blockquotes beautifully!
+Try experimenting with different themes to see how blockquotes and tables render!
 `,
-    wordCount: 161,
-    charCount: 1320,
+    wordCount: 104,
+    charCount: 755,
     updatedAt: Date.now() - 3600000, // 1 hour ago
     isExample: true,
-    folder: 'Docs/Tickets',
+    folder: 'Docs/Guides',
     filePath: null,
   },
   {

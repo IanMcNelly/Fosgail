@@ -16,7 +16,7 @@
     "viewer",
     "tauri",
     "react",
-    "offline-first"
+    "offline"
   ],
   "bugs": {
     "url": "https://github.com/IanMcNelly/markdown-viewer/issues"
