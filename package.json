@@ -6,6 +6,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/IanMcNelly/markdown-viewer.git"
@@ -58,7 +61,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/node": "^22.14.0",
+    "@types/node": "^24.0.0",
     "@types/prismjs": "^1.26.6",
     "@vitest/coverage-v8": "^4.1.8",
     "autoprefixer": "^10.4.21",

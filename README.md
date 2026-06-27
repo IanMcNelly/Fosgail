@@ -41,7 +41,7 @@
 
 ### Prerequisites
 
-- [Node.js 20+](https://nodejs.org/)
+- [Node.js 24+](https://nodejs.org/)
 - [Rust stable](https://rustup.rs/) (for desktop builds only)
 
 ### Web Dev Mode (no Rust needed)
