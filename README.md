@@ -33,7 +33,7 @@
 ![Zen Mode](assets/zen.PNG)
 
 #### Mermaid Diagrams
-![Mermaid Diagrams](assets/mermaid.png)
+![Mermaid Diagrams](assets/mermaid.PNG)
 
 ---
 
