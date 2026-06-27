@@ -21,6 +21,20 @@
 - **Zen Mode** — distraction-free fullscreen writing
 - **Offline** — zero network dependency, all data stays on disk
 
+### Showcase
+
+#### Live Split Preview
+![Split View Editor](assets/split_view.PNG)
+
+#### Command Palette
+![Command Palette](assets/comman_palette.PNG)
+
+#### Zen Mode (Distraction-Free)
+![Zen Mode](assets/zen.PNG)
+
+#### Mermaid Diagrams
+![Mermaid Diagrams](assets/mermaid.png)
+
 ---
 
 ## Tech Stack
