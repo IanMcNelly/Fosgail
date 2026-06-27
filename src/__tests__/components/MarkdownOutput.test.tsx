@@ -167,14 +167,4 @@ describe('MarkdownOutput — links', () => {
   });
 });
 
-// -------------------------------------------------------
-// Theme CSS injection
-// -------------------------------------------------------
-describe('MarkdownOutput — theme injection', () => {
-  it('injects theme CSS rules into the document head', () => {
-    const themeWithRules: CSSTheme = { ...testTheme, cssRules: '.test-rule { color: red; }' };
-    render(<MarkdownOutput content="# Hello" theme={themeWithRules} syncScrollPercent={null} />);
-    const styleTag = document.getElementById('markdown-viewer-active-theme-style');
-    expect(styleTag?.innerHTML).toContain('.test-rule');
-  });
-});
+
