@@ -147,12 +147,16 @@ export default function App() {
   // --------------------------------------------------
   useEffect(() => {
     const handleGlobalShortcuts = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsZenMode(false);
-        setIsOutlinePanelOpen(false);
-      }
-
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+
+      if (e.key === 'Escape') {
+        if (isCmdOrCtrl) {
+          setIsZenMode((p) => !p);
+        } else {
+          setIsZenMode(false);
+          setIsOutlinePanelOpen(false);
+        }
+      }
 
       if (isCmdOrCtrl) {
         switch (e.key.toLowerCase()) {
@@ -721,6 +725,17 @@ export default function App() {
               type="button"
             >
               <List size={16} />
+            </motion.button>
+            <motion.button
+              id="btn-toggle-zen"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`p-1.5 rounded-md transition-colors text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-800`}
+              onClick={() => setIsZenMode(true)}
+              title="Enter Zen Mode (Cmd+Esc)"
+              type="button"
+            >
+              <Maximize2 size={16} />
             </motion.button>
           </div>
         </header>

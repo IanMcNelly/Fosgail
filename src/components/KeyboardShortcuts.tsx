@@ -57,6 +57,11 @@ const SHORTCUTS_DATA: ShortcutRow[] = [
     action: 'Exit Zen / Close Panel',
     description: 'Exits Zen Mode or closes the floating Outline panel.',
   },
+  {
+    keys: ['Ctrl', 'Esc'],
+    action: 'Toggle Zen Mode',
+    description: 'Enters or exits the distraction-free fullscreen writing mode.',
+  },
 ];
 
 export default function KeyboardShortcuts() {
