@@ -2,7 +2,7 @@
 
 > A lightweight, offline Markdown viewer and editor built with React + Tauri. A premium, bloat-free alternative to opening an IDE just to read a `.md` file.
 
-[![CI](https://github.com/IanMcNelly/markdown-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/IanMcNelly/markdown-viewer/actions/workflows/ci.yml)
+[![CI](https://github.com/IanMcNelly/fosgail/actions/workflows/ci.yml/badge.svg)](https://github.com/IanMcNelly/fosgail/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-106%20passing-brightgreen)](#testing)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
