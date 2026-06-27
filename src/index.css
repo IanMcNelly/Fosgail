@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@450;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* -------------------------------------------------------
+   Design Tokens
+   ------------------------------------------------------- */
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Space Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "Cascadia Code", monospace;
+
+  --color-accent: hsl(255, 70%, 62%);
+  --color-accent-hover: hsl(255, 70%, 55%);
+  --color-accent-muted: hsl(255, 60%, 62%, 0.12);
+  --color-success: hsl(155, 60%, 45%);
+  --color-warn: hsl(38, 95%, 58%);
+}
+
+/* -------------------------------------------------------
+   Base Resets
+   ------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: hsl(255, 70%, 62%, 0.25);
+  color: inherit;
+}
+
+/* -------------------------------------------------------
+   Scrollbars — thin & themed
+   ------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.45);
+}
+
+/* -------------------------------------------------------
+   Keyframe Animations
+   ------------------------------------------------------- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.animate-fadeUp    { animation: fadeUp 0.3s ease both; }
+.animate-slideLeft { animation: slideInLeft 0.25s ease both; }
+.animate-pulse-soft { animation: pulseSoft 2s ease-in-out infinite; }
+
+/* -------------------------------------------------------
+   PDF / Print Styles
+   ------------------------------------------------------- */
+@media print {
+  #desktop-sidebar-rail,
+  #app-title-bar-header,
+  #applet-status-bar,
+  #workspace-markdown-editor,
+  #btn-exit-zen-floating,
+  .outline-panel { display: none !important; }
+
+  #compiled-markdown-viewport {
+    overflow: visible !important;
+    height: auto !important;
+    width: 100% !important;
+  }
+
+  .markdown-body {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }

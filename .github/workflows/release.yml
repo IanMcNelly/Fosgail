@@ -1,0 +1,316 @@
+name: Release
+
+# -------------------------------------------------------
+# Trigger: push a git tag like v1.2.3
+#
+# How to cut a release:
+#   git tag v1.2.3
+#   git push origin v1.2.3
+#
+# The workflow will:
+#   1. Extract the version from the tag
+#   2. Automatically patch package.json, tauri.conf.json,
+#      and Cargo.toml to match — so you never need to
+#      update version strings manually
+#   3. Run the full test suite as a gate
+#   4. Build native installers for Windows, macOS, Linux
+#   5. Publish a GitHub Release with all artifacts
+# -------------------------------------------------------
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"        # v1.0.0, v1.2.3, etc.
+      - "v[0-9]+.[0-9]+.[0-9]+-*"      # v1.0.0-beta.1, v2.0.0-rc.1, etc.
+
+  # Allow manually dispatching a release from the Actions UI
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version tag to release (e.g. v1.2.3)"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark as pre-release?"
+        required: false
+        type: boolean
+        default: false
+
+env:
+  # Resolve tag from either the push trigger or manual dispatch
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+jobs:
+  # -------------------------------------------------------
+  # Job 1: Gate — tests must pass before we build anything
+  # -------------------------------------------------------
+  test:
+    name: Test Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+  # -------------------------------------------------------
+  # Job 2: Sync version strings across all manifests
+  # Runs once on ubuntu, outputs a patched set of files
+  # that the build jobs will download and use
+  # -------------------------------------------------------
+  version-sync:
+    name: Sync Version Strings
+    runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      version: ${{ steps.parse.outputs.version }}
+      is_prerelease: ${{ steps.parse.outputs.is_prerelease }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Parse version from tag
+        id: parse
+        run: |
+          TAG="${{ env.RELEASE_TAG }}"
+          # Strip leading "v"
+          VERSION="${TAG#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          # Detect pre-release suffixes (alpha, beta, rc, etc.)
+          if [[ "$VERSION" == *"-"* ]]; then
+            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "Resolved version: $VERSION"
+
+      - name: Patch package.json
+        run: |
+          VERSION="${{ steps.parse.outputs.version }}"
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '$VERSION';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+            console.log('package.json -> ' + pkg.version);
+          "
+
+      - name: Patch tauri.conf.json
+        run: |
+          VERSION="${{ steps.parse.outputs.version }}"
+          node -e "
+            const fs = require('fs');
+            const conf = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
+            conf.version = '$VERSION';
+            fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(conf, null, 2) + '\n');
+            console.log('tauri.conf.json -> ' + conf.version);
+          "
+
+      - name: Patch Cargo.toml
+        run: |
+          VERSION="${{ steps.parse.outputs.version }}"
+          # Use sed to update only the [package] version line (not dependency versions)
+          sed -i "0,/^version = \".*\"/{s/^version = \".*\"/version = \"$VERSION\"/}" src-tauri/Cargo.toml
+          echo "Cargo.toml -> $(grep '^version' src-tauri/Cargo.toml | head -1)"
+
+      - name: Verify all versions match
+        run: |
+          VERSION="${{ steps.parse.outputs.version }}"
+          PKG=$(node -p "require('./package.json').version")
+          TAURI=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          CARGO=$(grep '^version' src-tauri/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+
+          echo "package.json:      $PKG"
+          echo "tauri.conf.json:   $TAURI"
+          echo "Cargo.toml:        $CARGO"
+
+          if [[ "$PKG" != "$VERSION" || "$TAURI" != "$VERSION" || "$CARGO" != "$VERSION" ]]; then
+            echo "❌ Version mismatch! Expected $VERSION everywhere."
+            exit 1
+          fi
+          echo "✅ All version strings are in sync at $VERSION"
+
+      - name: Upload patched manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: versioned-manifests
+          path: |
+            package.json
+            src-tauri/tauri.conf.json
+            src-tauri/Cargo.toml
+          retention-days: 1
+
+  # -------------------------------------------------------
+  # Job 3: Build native installers — one job per platform
+  # -------------------------------------------------------
+  build:
+    name: Build (${{ matrix.platform }})
+    needs: version-sync
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows — produces .msi and .exe (NSIS)
+          - platform: windows-latest
+            args: ""
+            artifact_name: fosgail-windows
+
+          # macOS — universal binary (Intel + Apple Silicon)
+          - platform: macos-latest
+            args: "--target universal-apple-darwin"
+            artifact_name: fosgail-macos
+
+          # Linux — produces .deb and .AppImage
+          - platform: ubuntu-22.04
+            args: ""
+            artifact_name: fosgail-linux
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Apply the version-patched manifest files from Job 2
+      - name: Download patched manifests
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-manifests
+
+      # The download puts files in the workspace root flat,
+      # so move Cargo.toml to src-tauri/ and tauri.conf.json too
+      - name: Restore manifest locations
+        shell: bash
+        run: |
+          # download-artifact restores to CWD — files should already be in place
+          # but verify tauri-specific ones are in src-tauri/
+          if [ -f "tauri.conf.json" ]; then
+            mv tauri.conf.json src-tauri/tauri.conf.json
+          fi
+          if [ -f "Cargo.toml" ] && [ ! -f "src-tauri/Cargo.toml" ]; then
+            mv Cargo.toml src-tauri/Cargo.toml
+          fi
+          echo "package.json version: $(node -p "require('./package.json').version")"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: >-
+            ${{ matrix.platform == 'macos-latest' &&
+            'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: ${{ matrix.platform }}-${{ needs.version-sync.outputs.version }}
+
+      - name: Install Linux system dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install macOS targets
+        if: matrix.platform == 'macos-latest'
+        run: |
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build and bundle Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Code signing (optional — set these secrets in repo settings to enable)
+          # TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          # TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ env.RELEASE_TAG }}
+          releaseName: "Fosgail ${{ env.RELEASE_TAG }}"
+          releaseBody: |
+            ## Fosgail ${{ env.RELEASE_TAG }}
+
+            See the [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+
+            ### Downloads
+            Pick the installer for your platform below.
+
+            | Platform | File |
+            |----------|------|
+            | Windows  | `.msi` (recommended) or `.exe` (NSIS) |
+            | macOS    | `.dmg` (universal — Intel & Apple Silicon) |
+            | Linux    | `.AppImage` (portable) or `.deb` (Debian/Ubuntu) |
+
+            > **First install?** macOS users may need to right-click → Open on first launch due to Gatekeeper.
+          releaseDraft: true
+          prerelease: ${{ needs.version-sync.outputs.is_prerelease == 'true' }}
+          args: ${{ matrix.args }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}-${{ needs.version-sync.outputs.version }}
+          path: |
+            src-tauri/target/release/bundle/**/*.msi
+            src-tauri/target/release/bundle/**/*.exe
+            src-tauri/target/release/bundle/**/*.dmg
+            src-tauri/target/release/bundle/**/*.AppImage
+            src-tauri/target/release/bundle/**/*.deb
+          retention-days: 14
+
+  # -------------------------------------------------------
+  # Job 4: Publish — promote the draft release to published
+  # after all 3 platform builds succeed
+  # -------------------------------------------------------
+  publish:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: [version-sync, build]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: "Fosgail ${{ env.RELEASE_TAG }}"
+          draft: false
+          prerelease: ${{ needs.version-sync.outputs.is_prerelease == 'true' }}
+          generate_release_notes: true
+          body: |
+            ## What's in this release
+
+            ${{ github.event.head_commit.message }}
+
+            ---
+            *Full changelog auto-generated below.*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

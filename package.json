@@ -1,0 +1,73 @@
+{
+  "name": "fosgail",
+  "description": "A lightweight markdown viewer and editor",
+  "author": "IanMcNelly",
+  "license": "MIT",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IanMcNelly/markdown-viewer.git"
+  },
+  "keywords": [
+    "markdown",
+    "editor",
+    "viewer",
+    "tauri",
+    "react",
+    "offline-first"
+  ],
+  "bugs": {
+    "url": "https://github.com/IanMcNelly/markdown-viewer/issues"
+  },
+  "homepage": "https://github.com/IanMcNelly/markdown-viewer#readme",
+  "scripts": {
+    "dev": "vite --port=3000 --host=0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview",
+    "clean": "rm -rf dist server.js",
+    "lint": "tsc --noEmit",
+    "lint:tests": "tsc --noEmit --project tsconfig.test.json",
+    "lint:all": "tsc --noEmit && tsc --noEmit --project tsconfig.test.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "desktop": "tauri dev",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.14",
+    "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@tauri-apps/plugin-fs": "^2.5.1",
+    "@vitejs/plugin-react": "^5.0.4",
+    "lucide-react": "^0.546.0",
+    "mermaid": "^11.15.0",
+    "motion": "^12.23.24",
+    "prismjs": "^1.30.0",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "vite": "^6.2.3",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^22.14.0",
+    "@types/prismjs": "^1.26.6",
+    "@vitest/coverage-v8": "^4.1.8",
+    "autoprefixer": "^10.4.21",
+    "esbuild": "^0.25.0",
+    "jsdom": "^29.1.1",
+    "tailwindcss": "^4.1.14",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.3",
+    "vitest": "^4.1.8"
+  }
+}
