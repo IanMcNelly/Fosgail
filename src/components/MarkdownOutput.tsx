@@ -83,6 +83,15 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
   // Define custom renderers for react-markdown
   // IMPORTANT: useMemo and hooks cannot be called inside these renderer callbacks.
   // We use simpleHash() to derive stable IDs without hooks.
+  
+  // Helper to extract raw text from React node children
+  const extractTextContent = (node: any): string => {
+    if (typeof node === 'string' || typeof node === 'number') return String(node);
+    if (Array.isArray(node)) return node.map(extractTextContent).join('');
+    if (node && node.props && node.props.children) return extractTextContent(node.props.children);
+    return '';
+  };
+
   const components = useMemo(() => {
     return {
       code({ node, className, children, ...props }: any) {
@@ -149,15 +158,15 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
 
       // Headings with stable slug IDs so the Outline Panel can scroll to them
       h1({ children, ...props }: any) {
-        const text = String(children);
+        const text = extractTextContent(children);
         return <h1 id={`heading-${slugify(text)}`} {...props}>{children}</h1>;
       },
       h2({ children, ...props }: any) {
-        const text = String(children);
+        const text = extractTextContent(children);
         return <h2 id={`heading-${slugify(text)}`} {...props}>{children}</h2>;
       },
       h3({ children, ...props }: any) {
-        const text = String(children);
+        const text = extractTextContent(children);
         return <h3 id={`heading-${slugify(text)}`} {...props}>{children}</h3>;
       },
 

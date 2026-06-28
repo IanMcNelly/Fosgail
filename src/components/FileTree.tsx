@@ -5,6 +5,7 @@ import {
   Plus, Trash2, FileText, FolderPlus, Check, X, Move
 } from 'lucide-react';
 import { MarkdownFile } from '../types';
+import { useAppStore } from '../store/useAppStore';
 
 interface FileTreeProps {
   files: MarkdownFile[];
@@ -54,6 +55,7 @@ export default function FileTree({
 }: FileTreeProps) {
   // Folder open/collapsed states
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+  const workspacePath = useAppStore(state => state.workspacePath);
 
   // Auto-expand all new folders when they are loaded into the workspace
   React.useEffect(() => {
@@ -365,6 +367,7 @@ export default function FileTree({
             <div className="text-[8px] text-neutral-400 flex items-center gap-1.5 mt-0.5">
               <span>{file.wordCount} words</span>
               {file.isExample && <span className="px-1.5 py-0.2 text-[7px] text-accent/80 bg-accent/10 rounded">Sample</span>}
+              {workspacePath && file.filePath && !file.filePath.startsWith(workspacePath) && <span className="px-1.5 py-0.2 text-[7px] text-orange-500/80 bg-orange-500/10 rounded border border-orange-500/20">External</span>}
             </div>
           </div>
         </div>
