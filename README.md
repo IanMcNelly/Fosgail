@@ -61,8 +61,8 @@
 ### Web Dev Mode (no Rust needed)
 
 ```bash
-git clone https://github.com/IanMcNelly/markdown-viewer
-cd markdown-viewer
+git clone https://github.com/IanMcNelly/fosgail
+cd fosgail
 npm install
 npm run dev        # → http://localhost:3000
 ```
