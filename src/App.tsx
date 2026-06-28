@@ -12,8 +12,9 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { open, save } from '@tauri-apps/plugin-dialog';
-import { readDir, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
+import { listen } from '@tauri-apps/api/event';
+import { open, save, ask } from '@tauri-apps/plugin-dialog';
+import { readDir, readTextFile, writeTextFile, mkdir, remove, rename } from '@tauri-apps/plugin-fs';
 
 // Import our modular models & components
 import { MarkdownFile, CSSTheme } from './types';
@@ -143,8 +144,87 @@ export default function App() {
   }, [activeMarkdownFile?.content, isAutoSaveEnabled, writeToDisk]);
 
   // --------------------------------------------------
-  // 3. DESKTOP KEYBOARD HOTKEYS IMPLEMENTATION
+  // 3. DESKTOP KEYBOARD HOTKEYS & EVENTS
   // --------------------------------------------------
+  useEffect(() => {
+    let unlistenClose: () => void;
+    const setupCloseListener = async () => {
+      try {
+        const appWindow = getCurrentWindow();
+        unlistenClose = await appWindow.onCloseRequested(async (event) => {
+          const currentFiles = useAppStore.getState().files;
+          const dirtyFiles = currentFiles.filter(f => f.isDirty);
+          
+          if (dirtyFiles.length > 0) {
+            event.preventDefault(); // Stop closing
+            
+            const confirm = await ask(`You have ${dirtyFiles.length} unsaved draft(s). Are you sure you want to exit? Unsaved changes will be kept in memory but might be lost if you open a new workspace later.`, { title: 'Unsaved Changes', kind: 'warning' });
+            if (confirm) {
+              appWindow.destroy();
+            }
+          }
+        });
+      } catch (e) {
+        console.error('Failed to setup close listener', e);
+      }
+    };
+    setupCloseListener();
+
+    return () => {
+      if (unlistenClose) unlistenClose();
+    };
+  }, []);
+
+  useEffect(() => {
+    let unlistenDrop: () => void;
+    const setupDropListener = async () => {
+      try {
+        unlistenDrop = await listen<{ paths: string[] }>('tauri://drop', async (event) => {
+          setIsDraggingFile(false);
+          const { paths } = event.payload;
+          if (paths && paths.length > 0) {
+            for (const rawPath of paths) {
+              const absolutePath = normalizePath(rawPath);
+              try {
+                const content = await readTextFile(absolutePath);
+                const counts = calculateWordCharCount(content);
+                const fileName = absolutePath.split('/').pop() || 'Unknown';
+                
+                const importedFile: MarkdownFile = {
+                  id: `file-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                  name: fileName,
+                  content: content,
+                  wordCount: counts.wordCount,
+                  charCount: counts.charCount,
+                  updatedAt: Date.now(),
+                  folder: '', // Opened outside workspace
+                  filePath: absolutePath, // Retain absolute path
+                  isDirty: false,
+                };
+                
+                setFiles((prev) => {
+                  const filtered = prev.filter(f => f.filePath !== absolutePath);
+                  return [importedFile, ...filtered];
+                });
+                setActiveFileId(importedFile.id);
+                setEditorMode('split');
+              } catch (e) {
+                console.error('Failed to read dropped file', e);
+              }
+            }
+          }
+        });
+      } catch (e) {
+        console.error('Failed to setup drop listener', e);
+      }
+    };
+    setupDropListener();
+
+    return () => {
+      if (unlistenDrop) unlistenDrop();
+    };
+  }, []);
+
   useEffect(() => {
     const handleGlobalShortcuts = (e: KeyboardEvent) => {
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
@@ -223,18 +303,33 @@ export default function App() {
 
   // Calculate text counts — imported from utils.ts
   // Create new draft with optional folder path
-  const handleCreateNewFile = (folderPath?: string) => {
+  const handleCreateNewFile = async (folderPath?: string) => {
     const counts = calculateWordCharCount('# Untitled Document\n\nStart writing here...');
+    const filename = `Draft_${Date.now().toString().slice(-4)}.md`;
+    let filePath: string | null = null;
+    let isDirty = true;
+    
+    if (workspacePath) {
+      filePath = normalizePath(`${workspacePath}/${folderPath ? folderPath + '/' : ''}${filename}`);
+      try {
+        await writeTextFile(filePath, '# Untitled Document\n\nStart writing here...');
+        isDirty = false;
+      } catch (e) {
+        console.error('Failed to create file on disk', e);
+        filePath = null;
+      }
+    }
+
     const newFile: MarkdownFile = {
       id: `file-${Date.now()}`,
-      name: `Draft_${Date.now().toString().slice(-4)}.md`,
+      name: filename,
       content: `# Untitled Document\n\nStart writing here.`,
       wordCount: counts.wordCount,
       charCount: counts.charCount,
       updatedAt: Date.now(),
       folder: folderPath || '',
-      filePath: null,
-      isDirty: true,
+      filePath,
+      isDirty,
     };
     setFiles((prev) => [newFile, ...prev]);
     setActiveFileId(newFile.id);
@@ -242,7 +337,14 @@ export default function App() {
   };
 
   // Add a new registered directory
-  const handleAddFolder = (folderPath: string) => {
+  const handleAddFolder = async (folderPath: string) => {
+    if (workspacePath) {
+      try {
+        await mkdir(normalizePath(`${workspacePath}/${folderPath}`), { recursive: true });
+      } catch (e) {
+        console.error('Failed to create folder on disk', e);
+      }
+    }
     setFolders((prev) => {
       if (prev.includes(folderPath)) return prev;
       return [...prev, folderPath];
@@ -250,7 +352,19 @@ export default function App() {
   };
 
   // Remove a folder and delete its contents from the in-memory store
-  const handleRemoveFolder = (folderPath: string) => {
+  const handleRemoveFolder = async (folderPath: string) => {
+    if (workspacePath) {
+      try {
+        const confirm = await ask(`Are you sure you want to permanently delete the folder "${folderPath}" and all its contents? This cannot be undone.`, { title: 'Confirm Deletion', kind: 'warning' });
+        if (!confirm) return;
+        await remove(normalizePath(`${workspacePath}/${folderPath}`), { recursive: true });
+      } catch (e) {
+        console.error('Failed to remove folder on disk', e);
+        alert(`Failed to delete folder: ${e}`);
+        return; // Don't remove from UI if it failed
+      }
+    }
+
     // Compute what the new active file should be before mutating
     const currentFiles = useAppStore.getState().files;
     const currentActiveId = useAppStore.getState().activeFileId;
@@ -280,9 +394,24 @@ export default function App() {
   };
 
   // Move a document into another folder directory
-  const handleMoveFileFolder = (fileId: string, folderPath: string) => {
+  const handleMoveFileFolder = async (fileId: string, folderPath: string) => {
+    const fileToMove = useAppStore.getState().files.find(f => f.id === fileId);
+    if (!fileToMove) return;
+
+    let newFilePath = fileToMove.filePath;
+    if (workspacePath && fileToMove.filePath) {
+      newFilePath = normalizePath(`${workspacePath}/${folderPath ? folderPath + '/' : ''}${fileToMove.name}`);
+      try {
+        await rename(fileToMove.filePath, newFilePath);
+      } catch (e) {
+        console.error('Failed to move file on disk', e);
+        alert(`Failed to move file: ${e}`);
+        return;
+      }
+    }
+
     setFiles((prev) =>
-      prev.map((f) => (f.id === fileId ? { ...f, folder: folderPath } : f))
+      prev.map((f) => (f.id === fileId ? { ...f, folder: folderPath, filePath: newFilePath } : f))
     );
   };
 
@@ -320,8 +449,24 @@ export default function App() {
     }
   };
 
-  // Delete a file from local collections
-  const handleDeleteFile = (id: string) => {
+  // Delete a file from local collections and disk
+  const handleDeleteFile = async (id: string) => {
+    const currentFiles = useAppStore.getState().files;
+    const fileToDelete = currentFiles.find(f => f.id === id);
+    if (!fileToDelete) return;
+
+    if (fileToDelete.filePath) {
+      try {
+        const confirm = await ask(`Are you sure you want to permanently delete "${fileToDelete.name}"? This cannot be undone.`, { title: 'Confirm Deletion', kind: 'warning' });
+        if (!confirm) return;
+        await remove(fileToDelete.filePath);
+      } catch (e) {
+        console.error('Failed to remove file on disk', e);
+        alert(`Failed to delete file: ${e}`);
+        return;
+      }
+    }
+
     setFiles((prev) => {
       const filtered = prev.filter((f) => f.id !== id);
       if (activeFileId === id) {
@@ -388,7 +533,7 @@ export default function App() {
   }, [activeFileId, setFiles]);
 
   // Rename the active file (with duplicate check)
-  const handleRenameActiveFile = (newName: string) => {
+  const handleRenameActiveFile = async (newName: string) => {
     if (!activeFileId) return;
     const currentFile = files.find((f) => f.id === activeFileId);
     if (!currentFile) return;
@@ -402,8 +547,21 @@ export default function App() {
       return; // Silently reject — EditorArea will reset to old name via prop
     }
 
+    let newFilePath = currentFile.filePath;
+    if (currentFile.filePath) {
+      const folderPath = currentFile.filePath.substring(0, currentFile.filePath.lastIndexOf('/'));
+      newFilePath = `${folderPath}/${newName}`;
+      try {
+        await rename(currentFile.filePath, newFilePath);
+      } catch (e) {
+        console.error('Failed to rename file on disk', e);
+        alert(`Failed to rename file: ${e}`);
+        return;
+      }
+    }
+
     setFiles((prev) =>
-      prev.map((f) => (f.id === activeFileId ? { ...f, name: newName, isDirty: true } : f))
+      prev.map((f) => (f.id === activeFileId ? { ...f, name: newName, isDirty: true, filePath: newFilePath } : f))
     );
   };
 
@@ -411,6 +569,12 @@ export default function App() {
   // 5. WORKSPACE IMPORTING
   // --------------------------------------------------
   const handleOpenWorkspace = async () => {
+    const dirtyFiles = useAppStore.getState().files.filter(f => f.isDirty);
+    if (dirtyFiles.length > 0) {
+      const confirm = await ask(`You have ${dirtyFiles.length} unsaved draft(s). Opening a new workspace will close the current files. Do you want to continue and discard unsaved changes?`, { title: 'Unsaved Changes', kind: 'warning' });
+      if (!confirm) return;
+    }
+
     try {
       const selected = await open({
         directory: true,
@@ -490,41 +654,9 @@ export default function App() {
     setIsDraggingFile(false);
   };
 
-  const readAndRegisterFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const rawContent = e.target?.result;
-      if (typeof rawContent === 'string') {
-        const counts = calculateWordCharCount(rawContent);
-        const importedFile: MarkdownFile = {
-          id: `file-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-          name: file.name.endsWith('.md') || file.name.endsWith('.txt')
-            ? file.name
-            : `${file.name}.md`,
-          content: rawContent,
-          wordCount: counts.wordCount,
-          charCount: counts.charCount,
-          updatedAt: Date.now(),
-          folder: '',
-          // Note: FileReader doesn't give us the real path for security reasons.
-          // The user can Cmd+S to explicitly save this file to a chosen location.
-          filePath: null,
-          isDirty: false,
-        };
-        setFiles((prev) => [importedFile, ...prev]);
-        setActiveFileId(importedFile.id);
-        setEditorMode('split');
-      }
-    };
-    reader.readAsText(file);
-  };
-
   const handleGlobalDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDraggingFile(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      readAndRegisterFile(e.dataTransfer.files[0]);
-    }
   };
 
   // --------------------------------------------------

@@ -145,13 +145,61 @@ export default function EditorArea({
       const end = textarea.selectionEnd;
       const text = textarea.value;
 
-      // Insert 2 spaces for tab
-      const newValue = text.substring(0, start) + '  ' + text.substring(end);
-      onChange(newValue);
-
-      setTimeout(() => {
-        textarea.setSelectionRange(start + 2, start + 2);
-      }, 0);
+      if (start === end && !e.shiftKey) {
+        // Insert 2 spaces at cursor
+        const newValue = text.substring(0, start) + '  ' + text.substring(end);
+        onChange(newValue);
+        setTimeout(() => {
+          textarea.setSelectionRange(start + 2, start + 2);
+        }, 0);
+      } else {
+        // Multi-line indent / un-indent
+        let lineStart = start;
+        while (lineStart > 0 && text[lineStart - 1] !== '\n') {
+          lineStart--;
+        }
+        
+        const prefix = text.substring(0, lineStart);
+        const selectedLinesText = text.substring(lineStart, end);
+        const suffix = text.substring(end);
+        
+        let newSelectionEnd = end;
+        let newSelectionStart = start;
+        
+        const lines = selectedLinesText.split('\n');
+        const modifiedLines = lines.map((line, idx) => {
+          if (e.shiftKey) {
+            // Un-indent (remove up to 2 leading spaces)
+            if (line.startsWith('  ')) {
+              newSelectionEnd -= 2;
+              if (idx === 0 && newSelectionStart > lineStart) newSelectionStart = Math.max(lineStart, newSelectionStart - 2);
+              return line.substring(2);
+            } else if (line.startsWith(' ') || line.startsWith('\t')) {
+              newSelectionEnd -= 1;
+              if (idx === 0 && newSelectionStart > lineStart) newSelectionStart = Math.max(lineStart, newSelectionStart - 1);
+              return line.substring(1);
+            }
+            return line;
+          } else {
+            // Indent
+            newSelectionEnd += 2;
+            if (idx === 0 && newSelectionStart > lineStart) newSelectionStart += 2;
+            return '  ' + line;
+          }
+        });
+        
+        const modifiedText = modifiedLines.join('\n');
+        const newValue = prefix + modifiedText + suffix;
+        onChange(newValue);
+        
+        setTimeout(() => {
+          textarea.setSelectionRange(
+            e.shiftKey && start === end ? newSelectionStart : (start === end ? start : newSelectionStart),
+            newSelectionEnd
+          );
+        }, 0);
+      }
+      return;
     }
 
     // Auto close delimiters: brackets, asterisks, etc.
@@ -188,7 +236,8 @@ export default function EditorArea({
       setLocalFileName(fileName); // Revert if empty
       return;
     }
-    const finalName = trimmed.endsWith('.md') ? trimmed : `${trimmed}.md`;
+    const hasValidExt = /\.(md|mdx|txt|markdown)$/i.test(trimmed);
+    const finalName = hasValidExt ? trimmed : `${trimmed}.md`;
     if (finalName !== fileName) {
       // Delegate duplicate check to App.tsx — if rejected, the prop won't update
       // and the useEffect below will reset localFileName on next render
@@ -208,7 +257,12 @@ export default function EditorArea({
             value={localFileName}
             onChange={(e) => setLocalFileName(e.target.value)}
             onBlur={handleBlurRename}
-            onKeyDown={(e) => e.key === 'Enter' && handleBlurRename()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.currentTarget.blur();
+              }
+            }}
             className={`text-xs font-semibold px-2 py-1 max-w-[160px] md:max-w-[240px] border rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 text-neutral-800 dark:text-neutral-200 truncate ${
               themeInfo.isDark ? 'bg-black/30 border-white/5' : 'bg-neutral-100 border-neutral-200/50'
             }`}
@@ -369,17 +423,19 @@ export default function EditorArea({
       {/* Editor inputs container split */}
       <div className="flex-1 flex relative overflow-hidden">
         {/* Line Numbers column gutter */}
-        <div
-          ref={lineNumbersRef}
-          className={`w-12 text-right pr-3 py-6 md:py-8 select-none overflow-hidden font-mono text-xs leading-normal ${themeInfo.gutterBg}`}
-          style={{ fontSize: `${fontSize}px` }}
-        >
-          {lineNumbers.map((lineNum) => (
-            <div key={lineNum} className="h-[1.5em] leading-[1.5em]">
-              {lineNum}
-            </div>
-          ))}
-        </div>
+        {!wordWrap && (
+          <div
+            ref={lineNumbersRef}
+            className={`w-12 text-right pr-3 py-6 md:py-8 select-none overflow-hidden font-mono text-xs leading-normal ${themeInfo.gutterBg}`}
+            style={{ fontSize: `${fontSize}px` }}
+          >
+            {lineNumbers.map((lineNum) => (
+              <div key={lineNum} className="h-[1.5em] leading-[1.5em]">
+                {lineNum}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Text Area */}
         <textarea

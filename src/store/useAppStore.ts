@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { MarkdownFile, CSSTheme } from '../types';
 import { INITIAL_FILES } from '../samples';
+import { tauriStorage } from './tauriStorage';
 
 export type EditorMode = 'split' | 'edit' | 'preview';
 export type ModalType = null | 'shortcuts' | 'theme-editor' | 'settings' | 'recent-files' | 'command-palette';
@@ -99,6 +100,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'fosgail-storage',
+      storage: createJSONStorage(() => tauriStorage),
       // We don't want to persist transient state like activeModal
       partialize: (state) => ({
         files: state.files,
