@@ -9,6 +9,22 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-28
+
+### Added
+- Added screenshots to documentation
+
+### Fixed
+- Fixed image filename case for Mermaid Diagrams
+- Implemented Tauri file system persistence and resolved editor bugs
+
+## [1.1.0] - 2026-06-27
+
+### Changed
+- Bumped Node.js requirement to version 24
+
+## [1.0.0] - 2026-06-27
+
 ### Added
 - Command Palette (`Cmd+K`) — unified file search + command dispatch
 - Document Outline panel — floating Typora-style heading navigator (`Cmd+I`)
@@ -58,5 +74,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Word count, character count, file size in status bar
 - Keyboard shortcuts modal
 
-[Unreleased]: https://github.com/IanMcNelly/markdown-viewer/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/IanMcNelly/markdown-viewer/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/IanMcNelly/markdown-viewer/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/IanMcNelly/markdown-viewer/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/IanMcNelly/markdown-viewer/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/IanMcNelly/markdown-viewer/releases/tag/v0.1.0
