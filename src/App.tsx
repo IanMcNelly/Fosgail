@@ -475,6 +475,21 @@ export default function App() {
       return filtered;
     });
   };
+  const handleSelectFile = useCallback(async (id: string) => {
+    setActiveFileId(id);
+    const file = files.find(f => f.id === id);
+    if (file && !file.isLoaded && file.filePath) {
+      try {
+        const content = await readTextFile(file.filePath);
+        const counts = calculateWordCharCount(content);
+        setFiles(prev => prev.map(f => f.id === id ? { ...f, content, wordCount: counts.wordCount, charCount: counts.charCount, isLoaded: true } : f));
+      } catch (err: any) {
+        console.error(`Failed to load file content for ${file.name}:`, err);
+        alert(`Failed to load file: ${err.message || err}`);
+      }
+    }
+  }, [files, setFiles, setActiveFileId]);
+
   // Internal link navigation
   const handleNavigate = useCallback((href: string) => {
     if (!activeMarkdownFile) return;
@@ -565,20 +580,6 @@ export default function App() {
     );
   };
 
-  const handleSelectFile = useCallback(async (id: string) => {
-    setActiveFileId(id);
-    const file = files.find(f => f.id === id);
-    if (file && !file.isLoaded && file.filePath) {
-      try {
-        const content = await readTextFile(file.filePath);
-        const counts = calculateWordCharCount(content);
-        setFiles(prev => prev.map(f => f.id === id ? { ...f, content, wordCount: counts.wordCount, charCount: counts.charCount, isLoaded: true } : f));
-      } catch (err: any) {
-        console.error(`Failed to load file content for ${file.name}:`, err);
-        alert(`Failed to load file: ${err.message || err}`);
-      }
-    }
-  }, [files, setFiles, setActiveFileId]);
 
   // --------------------------------------------------
   // 5. WORKSPACE IMPORTING
