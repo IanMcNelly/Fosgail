@@ -167,6 +167,10 @@ export default function CommandPalette({
           <input
             ref={inputRef}
             type="text"
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="command-palette-results"
+            aria-activedescendant={results.length > 0 ? `result-item-${selectedIndex}` : undefined}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -223,7 +227,7 @@ export default function CommandPalette({
             </div>
           </div>
         ) : (
-          <div ref={listRef} className="space-y-0.5">
+          <div ref={listRef} className="space-y-0.5" role="listbox" id="command-palette-results">
             {/* Section headers */}
             {!isCommandMode && !searchTerm && recentlyViewedIds.length > 0 && (
               <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-neutral-400 flex items-center gap-1.5">
@@ -247,7 +251,7 @@ export default function CommandPalette({
                 item.matchType === 'title';
 
               return (
-                <div key={idx}>
+                <div key={idx} role="presentation">
                   {showAllSection && (
                     <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-neutral-400 flex items-center gap-1.5 mt-1">
                       <FileText size={9} />
@@ -256,6 +260,9 @@ export default function CommandPalette({
                   )}
 
                   <div
+                    id={`result-item-${idx}`}
+                    role="option"
+                    aria-selected={isSelected}
                     onClick={() => handleSelect(item)}
                     className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all ${
                       isSelected

@@ -503,14 +503,14 @@ export default function App() {
     // Find matching file
     const exactMatch = files.find(f => (f.folder || '') === linkFolder && f.name === linkFileName);
     if (exactMatch) {
-      setActiveFileId(exactMatch.id);
+      handleSelectFile(exactMatch.id);
     } else {
       const nameMatch = files.find(f => f.name === linkFileName);
       if (nameMatch) {
-        setActiveFileId(nameMatch.id);
+        handleSelectFile(nameMatch.id);
       }
     }
-  }, [activeMarkdownFile, files, setActiveFileId]);
+  }, [activeMarkdownFile, files, handleSelectFile]);
 
   // Handle active file content change
   const handleEditorContentChange = useCallback((newValue: string) => {
@@ -565,6 +565,21 @@ export default function App() {
     );
   };
 
+  const handleSelectFile = useCallback(async (id: string) => {
+    setActiveFileId(id);
+    const file = files.find(f => f.id === id);
+    if (file && !file.isLoaded && file.filePath) {
+      try {
+        const content = await readTextFile(file.filePath);
+        const counts = calculateWordCharCount(content);
+        setFiles(prev => prev.map(f => f.id === id ? { ...f, content, wordCount: counts.wordCount, charCount: counts.charCount, isLoaded: true } : f));
+      } catch (err: any) {
+        console.error(`Failed to load file content for ${file.name}:`, err);
+        alert(`Failed to load file: ${err.message || err}`);
+      }
+    }
+  }, [files, setFiles, setActiveFileId]);
+
   // --------------------------------------------------
   // 5. WORKSPACE IMPORTING
   // --------------------------------------------------
@@ -598,25 +613,19 @@ export default function App() {
                   newFolders.add(newRelPath);
                   await scanDirectory(normalizePath(`${dirPath}/${entry.name}`), newRelPath);
                 } else if (entry.name && (entry.name.toLowerCase().endsWith('.md') || entry.name.toLowerCase().endsWith('.txt') || entry.name.toLowerCase().endsWith('.mdx') || entry.name.toLowerCase().endsWith('.markdown'))) {
-                  try {
-                    const absoluteFilePath = normalizePath(`${dirPath}/${entry.name}`);
-                    const content = await readTextFile(absoluteFilePath);
-                    const counts = calculateWordCharCount(content);
-                    newFiles.push({
-                      id: `file-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-                      name: entry.name,
-                      content,
-                      wordCount: counts.wordCount,
-                      charCount: counts.charCount,
-                      updatedAt: Date.now(),
-                      folder: relativePath,
-                      filePath: absoluteFilePath,
-                      isDirty: false,
-                    });
-                  } catch (fileErr: any) {
-                    errors.push(`File error (${entry.name}): ${fileErr.message || fileErr}`);
-                    console.error(`Failed to read file ${entry.name}:`, fileErr);
-                  }
+                  const absoluteFilePath = normalizePath(`${dirPath}/${entry.name}`);
+                  newFiles.push({
+                    id: `file-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+                    name: entry.name,
+                    content: '', // Lazily load this later when the user clicks the file
+                    wordCount: 0,
+                    charCount: 0,
+                    updatedAt: Date.now(),
+                    folder: relativePath,
+                    filePath: absoluteFilePath,
+                    isDirty: false,
+                    isLoaded: false, // New flag indicating content hasn't been fetched via IPC yet
+                  });
                 }
               }
             } catch (err: any) {
@@ -892,7 +901,7 @@ export default function App() {
                 files={files}
                 activeFileId={activeFileId}
                 isSidebarOpen={true}
-                onSelectFile={setActiveFileId}
+                onSelectFile={handleSelectFile}
                 onNewFile={handleCreateNewFile}
                 onDeleteFile={handleDeleteFile}
                 folders={folders}
@@ -1066,7 +1075,7 @@ export default function App() {
                     recentlyViewedIds={recentlyViewedIds}
                     commands={commands}
                     themeInfo={themeInfo}
-                    onSelectFile={(id) => { setActiveFileId(id); setActiveModal(null); }}
+                    onSelectFile={(id) => { handleSelectFile(id); setActiveModal(null); }}
                     onClose={() => setActiveModal(null)}
                   />
                 )}

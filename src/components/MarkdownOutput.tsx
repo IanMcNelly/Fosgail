@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useMemo, useState, useRef, lazy, Suspense } from 'react';
+import React, { useEffect, useMemo, useState, useRef, lazy, Suspense } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Prism from 'prismjs';
@@ -22,6 +22,13 @@ import { slugify, simpleHash } from '../utils';
 
 // Lazy-load Mermaid renderer — zero cost unless a mermaid block exists
 const MermaidBlock = lazy(() => import('./MermaidBlock'));
+
+// Extract and memoize the expensive Markdown rendering
+const MemoizedMarkdown = React.memo(({ content, components }: { content: string, components: any }) => (
+  <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+    {content}
+  </ReactMarkdown>
+));
 
 interface MarkdownOutputProps {
   content: string;
@@ -221,9 +228,7 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
       className={`w-full h-full overflow-y-auto ${syncScrollPercent !== null ? 'hide-scrollbar' : ''}`}
     >
       <div className="markdown-body min-h-full w-full max-w-none px-6 py-6 md:px-12 md:py-10 transition-all duration-300">
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-          {content}
-        </ReactMarkdown>
+        <MemoizedMarkdown content={content} components={components} />
       </div>
     </div>
   );
