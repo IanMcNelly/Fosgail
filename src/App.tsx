@@ -100,7 +100,9 @@ export default function App() {
       styleTag.id = 'markdown-viewer-active-theme-style';
       document.head.appendChild(styleTag);
     }
-    styleTag.innerHTML = activeTheme.cssRules;
+    // SECURE: Use textContent instead of innerHTML to prevent XSS breakout
+    // e.g. escaping the style tag via </style><script>...</script>
+    styleTag.textContent = activeTheme.cssRules;
   }, [activeTheme]);
 
   // --------------------------------------------------

@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useState, useRef, lazy, Suspense } from 'rea
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Prism from 'prismjs';
+import DOMPurify from 'dompurify';
 
 // Import necessary languages for syntax highlighting
 import 'prismjs/components/prism-typescript';
@@ -130,6 +131,9 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
             console.warn('Prism failed to highlight language:', language, err);
           }
 
+          // SECURE: Sanitize syntax highlighted code before rendering to prevent XSS
+          const sanitizedHighlighted = DOMPurify.sanitize(highlighted);
+
           return (
             <div className="relative group/code-block my-4 rounded-xl overflow-hidden border border-neutral-200/60 dark:border-neutral-700/40 shadow-sm">
               <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-200/50 dark:border-neutral-700/30 bg-neutral-100/70 dark:bg-neutral-900/40">
@@ -148,7 +152,7 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
               <pre className={`language-${language} !my-0 !rounded-none !rounded-b-xl`}>
                 <code
                   className={`language-${language}`}
-                  dangerouslySetInnerHTML={{ __html: highlighted }}
+                  dangerouslySetInnerHTML={{ __html: sanitizedHighlighted }}
                 />
               </pre>
             </div>
