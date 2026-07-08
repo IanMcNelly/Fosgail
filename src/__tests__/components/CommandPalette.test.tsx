@@ -57,7 +57,7 @@ function renderPalette({
       onClose={onClose}
     />
   );
-  const input = screen.getByRole('textbox');
+  const input = screen.getByRole('combobox');
   return { ...utils, input, onSelectFile, onClose };
 }
 
@@ -218,7 +218,7 @@ describe('CommandPalette — command mode', () => {
     const cmd = makeCommand({ label: 'Do Action', action: actionFn });
     renderPalette({ commands: [cmd] });
     const user = userEvent.setup();
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     await user.type(input, '>');
     // Click the row containing "Do Action"
     const label = screen.getByText('Do Action');
@@ -241,7 +241,7 @@ describe('CommandPalette — keyboard navigation', () => {
   it('calls onSelectFile with correct id when Enter is pressed on first result', () => {
     const onSelectFile = vi.fn();
     renderPalette({ files, onSelectFile });
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onSelectFile).toHaveBeenCalledWith('x1');
   });
@@ -249,7 +249,7 @@ describe('CommandPalette — keyboard navigation', () => {
   it('calls onClose when Escape is pressed', () => {
     const onClose = vi.fn();
     renderPalette({ files, onClose });
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     fireEvent.keyDown(input, { key: 'Escape' });
     expect(onClose).toHaveBeenCalled();
   });
@@ -257,7 +257,7 @@ describe('CommandPalette — keyboard navigation', () => {
   it('ArrowDown moves selection to second item, Enter selects it', () => {
     const onSelectFile = vi.fn();
     renderPalette({ files, onSelectFile });
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     fireEvent.keyDown(input, { key: 'ArrowDown' });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onSelectFile).toHaveBeenCalledWith('x2');
@@ -266,7 +266,7 @@ describe('CommandPalette — keyboard navigation', () => {
   it('ArrowUp from first item wraps to last item', () => {
     const onSelectFile = vi.fn();
     renderPalette({ files, onSelectFile });
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     fireEvent.keyDown(input, { key: 'ArrowUp' });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onSelectFile).toHaveBeenCalledWith('x3');

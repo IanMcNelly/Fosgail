@@ -16,6 +16,8 @@ export interface MarkdownFile {
   filePath: string | null;
   /** True when in-memory content differs from what's on disk (or if it's a new draft) */
   isDirty?: boolean;
+  /** True if the content has been fetched from disk (used for lazy loading) */
+  isLoaded?: boolean;
 }
 
 export interface CSSTheme {
