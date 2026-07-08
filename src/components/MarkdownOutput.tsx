@@ -41,8 +41,49 @@ interface MarkdownOutputProps {
   onNavigate?: (href: string) => void;
 }
 
+const CodeBlock = React.memo(({ language, value, blockId }: { language: string, value: string, blockId: string }) => {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 1500);
+  };
+
+  let highlighted = value;
+  try {
+    const prismLang = Prism.languages[language] || Prism.languages.markup;
+    highlighted = Prism.highlight(value, prismLang, language);
+  } catch (err) {
+    console.warn('Prism failed to highlight language:', language, err);
+  }
+
+  return (
+    <div className="relative group/code-block my-4 rounded-xl overflow-hidden border border-neutral-200/60 dark:border-neutral-700/40 shadow-sm">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-200/50 dark:border-neutral-700/30 bg-neutral-100/70 dark:bg-neutral-900/40">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-400">
+          {language}
+        </span>
+        <button
+          type="button"
+          id={`btn-copy-code-${blockId}`}
+          onClick={handleCopy}
+          className="px-2 py-0.5 text-[10px] font-semibold rounded-md cursor-pointer transition-all bg-neutral-200/80 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300"
+        >
+          {isCopied ? '✓ Copied' : 'Copy'}
+        </button>
+      </div>
+      <pre className={`language-${language} !my-0 !rounded-none !rounded-b-xl`}>
+        <code
+          className={`language-${language}`}
+          dangerouslySetInnerHTML={{ __html: highlighted }}
+        />
+      </pre>
+    </div>
+  );
+});
+
 export default function MarkdownOutput({ content, theme, syncScrollPercent, onSyncScroll, onNavigate }: MarkdownOutputProps) {
-  const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const isSyncingRef = useRef(false);
 
@@ -80,13 +121,6 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
     }
   };
 
-  // Handle copying code blocks
-  const handleCopyCode = (codeText: string, blockId: string) => {
-    navigator.clipboard.writeText(codeText);
-    setCopiedCodeId(blockId);
-    setTimeout(() => setCopiedCodeId(null), 1500);
-  };
-
   // Define custom renderers for react-markdown
   // IMPORTANT: useMemo and hooks cannot be called inside these renderer callbacks.
   // We use simpleHash() to derive stable IDs without hooks.
@@ -119,40 +153,10 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
           }
 
           // Standard code block with Prism highlighting
-          let highlighted = value;
           // Compute a stable block ID from content — no hook calls here
           const blockId = simpleHash(value + language);
 
-          try {
-            const prismLang = Prism.languages[language] || Prism.languages.markup;
-            highlighted = Prism.highlight(value, prismLang, language);
-          } catch (err) {
-            console.warn('Prism failed to highlight language:', language, err);
-          }
-
-          return (
-            <div className="relative group/code-block my-4 rounded-xl overflow-hidden border border-neutral-200/60 dark:border-neutral-700/40 shadow-sm">
-              <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-200/50 dark:border-neutral-700/30 bg-neutral-100/70 dark:bg-neutral-900/40">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-400">
-                  {language}
-                </span>
-                <button
-                  type="button"
-                  id={`btn-copy-code-${blockId}`}
-                  onClick={() => handleCopyCode(value, blockId)}
-                  className="px-2 py-0.5 text-[10px] font-semibold rounded-md cursor-pointer transition-all bg-neutral-200/80 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300"
-                >
-                  {copiedCodeId === blockId ? '✓ Copied' : 'Copy'}
-                </button>
-              </div>
-              <pre className={`language-${language} !my-0 !rounded-none !rounded-b-xl`}>
-                <code
-                  className={`language-${language}`}
-                  dangerouslySetInnerHTML={{ __html: highlighted }}
-                />
-              </pre>
-            </div>
-          );
+          return <CodeBlock language={language} value={value} blockId={blockId} />;
         }
 
         // Inline code
@@ -218,7 +222,7 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
         return <input {...props} />;
       },
     };
-  }, [copiedCodeId, hasMermaid, onNavigate]);
+  }, [hasMermaid, onNavigate]);
 
   return (
     <div
