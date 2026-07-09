@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import DOMPurify from 'dompurify';
 
 interface MermaidBlockProps {
   code: string;
@@ -84,11 +85,14 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
     );
   }
 
+  // SECURE: Sanitize Mermaid SVG output before rendering to prevent XSS
+  const sanitizedSvg = DOMPurify.sanitize(svg);
+
   return (
     <div
       ref={containerRef}
       className="my-4 p-4 rounded-xl border border-neutral-700/30 bg-neutral-900/20 overflow-x-auto flex justify-center"
-      dangerouslySetInnerHTML={{ __html: svg }}
+      dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
     />
   );
 }
