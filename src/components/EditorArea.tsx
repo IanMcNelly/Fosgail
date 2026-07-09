@@ -296,6 +296,7 @@ export default function EditorArea({
             onClick={() => insertMarkdown('# ', '\n')}
             className="p-1 rounded text-neutral-500 hover:text-[#c084fc] hover:bg-white/5 transition-colors cursor-pointer"
             title="Header h1"
+            aria-label="Header h1"
           >
             <Heading1 size={14} />
           </button>
@@ -305,6 +306,7 @@ export default function EditorArea({
             onClick={() => insertMarkdown('**', '**')}
             className="p-1 rounded text-neutral-500 hover:text-[#c084fc] hover:bg-white/5 transition-colors cursor-pointer"
             title="Bold text"
+            aria-label="Bold text"
           >
             <Bold size={14} />
           </button>
@@ -314,6 +316,7 @@ export default function EditorArea({
             onClick={() => insertMarkdown('*', '*')}
             className="p-1 rounded text-neutral-500 hover:text-[#c084fc] hover:bg-white/5 transition-colors cursor-pointer"
             title="Italic text"
+            aria-label="Italic text"
           >
             <Italic size={14} />
           </button>
@@ -323,6 +326,7 @@ export default function EditorArea({
             onClick={() => insertMarkdown('`', '`')}
             className="p-1 rounded text-neutral-500 hover:text-[#c084fc] hover:bg-white/5 transition-colors cursor-pointer"
             title="Inline code"
+            aria-label="Inline code"
           >
             <Code size={14} />
           </button>
@@ -332,6 +336,7 @@ export default function EditorArea({
             onClick={() => insertMarkdown('[', '](https://)')}
             className="p-1 rounded text-neutral-500 hover:text-[#c084fc] hover:bg-white/5 transition-colors cursor-pointer"
             title="Hyperlink"
+            aria-label="Hyperlink"
           >
             <Link size={14} />
           </button>
@@ -341,6 +346,7 @@ export default function EditorArea({
             onClick={() => insertMarkdown('* ', '\n')}
             className="p-1 rounded text-neutral-500 hover:text-[#c084fc] hover:bg-white/5 transition-colors cursor-pointer"
             title="Bullet list"
+            aria-label="Bullet list"
           >
             <List size={14} />
           </button>
@@ -350,6 +356,7 @@ export default function EditorArea({
             onClick={() => insertMarkdown('- [ ] ', '\n')}
             className="p-1 rounded text-neutral-500 hover:text-[#c084fc] hover:bg-white/5 transition-colors cursor-pointer"
             title="Task checklist list"
+            aria-label="Task checklist list"
           >
             <CheckSquare size={14} />
           </button>
@@ -359,6 +366,7 @@ export default function EditorArea({
             onClick={() => insertMarkdown('\n| Header | Value |\n| :--- | :--- |\n| Col 1 | Content 1 |\n| Col 2 | Content 2 |\n')}
             className="p-1 rounded text-neutral-500 hover:text-[#c084fc] hover:bg-white/5 transition-colors cursor-pointer"
             title="Table block template"
+            aria-label="Table block template"
           >
             <Table size={14} />
           </button>
@@ -372,6 +380,7 @@ export default function EditorArea({
             onClick={() => onFontSizeChange(Math.max(fontSize - 1, 10))}
             className="p-1 rounded text-neutral-500 hover:bg-white/5 transition-colors disabled:opacity-40 cursor-pointer"
             title="Decrease Editor size"
+            aria-label="Decrease Editor size"
             disabled={fontSize <= 10}
           >
             <ZoomOut size={13} />
@@ -385,6 +394,7 @@ export default function EditorArea({
             onClick={() => onFontSizeChange(Math.min(fontSize + 1, 24))}
             className="p-1 rounded text-neutral-500 hover:bg-white/5 transition-colors disabled:opacity-40 cursor-pointer"
             title="Increase Editor size"
+            aria-label="Increase Editor size"
             disabled={fontSize >= 24}
           >
             <ZoomIn size={13} />
