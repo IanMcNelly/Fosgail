@@ -42,8 +42,29 @@ interface MarkdownOutputProps {
   onNavigate?: (href: string) => void;
 }
 
+// Separate component for copy button to avoid re-rendering entire markdown on copy
+const CopyButton = ({ value, blockId }: { value: string; blockId: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <button
+      type="button"
+      id={`btn-copy-code-${blockId}`}
+      onClick={handleCopyCode}
+      className="px-2 py-0.5 text-[10px] font-semibold rounded-md cursor-pointer transition-all bg-neutral-200/80 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300"
+    >
+      {copied ? '✓ Copied' : 'Copy'}
+    </button>
+  );
+};
+
 export default function MarkdownOutput({ content, theme, syncScrollPercent, onSyncScroll, onNavigate }: MarkdownOutputProps) {
-  const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const isSyncingRef = useRef(false);
 
@@ -79,13 +100,6 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
     if (maxScroll > 0) {
       onSyncScroll(el.scrollTop / maxScroll);
     }
-  };
-
-  // Handle copying code blocks
-  const handleCopyCode = (codeText: string, blockId: string) => {
-    navigator.clipboard.writeText(codeText);
-    setCopiedCodeId(blockId);
-    setTimeout(() => setCopiedCodeId(null), 1500);
   };
 
   // Define custom renderers for react-markdown
@@ -140,14 +154,7 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
                 <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-400">
                   {language}
                 </span>
-                <button
-                  type="button"
-                  id={`btn-copy-code-${blockId}`}
-                  onClick={() => handleCopyCode(value, blockId)}
-                  className="px-2 py-0.5 text-[10px] font-semibold rounded-md cursor-pointer transition-all bg-neutral-200/80 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300"
-                >
-                  {copiedCodeId === blockId ? '✓ Copied' : 'Copy'}
-                </button>
+                <CopyButton value={value} blockId={blockId} />
               </div>
               <pre className={`language-${language} !my-0 !rounded-none !rounded-b-xl`}>
                 <code
@@ -222,7 +229,7 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
         return <input {...props} />;
       },
     };
-  }, [copiedCodeId, hasMermaid, onNavigate]);
+  }, [hasMermaid, onNavigate]);
 
   return (
     <div
