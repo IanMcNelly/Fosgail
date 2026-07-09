@@ -468,7 +468,7 @@ export default function FileTree({
       {/* Main tree renderer list */}
       <div className="space-y-0.5">
         {/* Render child directories recursively from Root */}
-        {Object.values(tree.subfolders)
+        {(Object.values(tree.subfolders) as TreeNode[])
           .sort((a, b) => a.name.localeCompare(b.name))
           .map((subNode) => renderFolderNode(subNode, 0))}
 

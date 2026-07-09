@@ -330,8 +330,11 @@ export default function SettingsModal({
               <button
                 id="btn-settings-toggle-word-wrap"
                 type="button"
+                role="switch"
+                aria-checked={wordWrap}
+                aria-label="Toggle word wrap"
                 onClick={onToggleWordWrap}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-[#18181B] ${
                   wordWrap ? 'bg-accent' : 'bg-neutral-200 dark:bg-neutral-800'
                 }`}
               >
@@ -357,8 +360,11 @@ export default function SettingsModal({
               <button
                 id="btn-settings-toggle-sync-scroll"
                 type="button"
+                role="switch"
+                aria-checked={isSyncScrollEnabled}
+                aria-label="Toggle synchronized scrolling"
                 onClick={onToggleSyncScroll}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-[#18181B] ${
                   isSyncScrollEnabled ? 'bg-accent' : 'bg-neutral-200 dark:bg-neutral-800'
                 }`}
               >
@@ -384,8 +390,11 @@ export default function SettingsModal({
               <button
                 id="btn-settings-toggle-auto-save"
                 type="button"
+                role="switch"
+                aria-checked={isAutoSaveEnabled}
+                aria-label="Toggle auto-save to disk"
                 onClick={onToggleAutoSave}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-[#18181B] ${
                   isAutoSaveEnabled ? 'bg-accent' : 'bg-neutral-200 dark:bg-neutral-800'
                 }`}
               >
