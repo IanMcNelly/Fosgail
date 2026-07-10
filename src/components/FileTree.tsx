@@ -240,6 +240,7 @@ export default function FileTree({
                 }}
                 className="p-1 rounded bg-rose-600 hover:bg-rose-500 text-white cursor-pointer"
                 title="Wipe files"
+                aria-label="Confirm wipe folder"
               >
                 <Check size={10} />
               </button>
@@ -247,6 +248,7 @@ export default function FileTree({
                 type="button"
                 onClick={() => setConfirmDeletePath(null)}
                 className="p-1 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-400 hover:text-neutral-200 cursor-pointer"
+                aria-label="Cancel wipe folder"
               >
                 <X size={10} />
               </button>
@@ -260,6 +262,7 @@ export default function FileTree({
                 onClick={() => onNewFile(node.fullPath)}
                 className="p-1 text-neutral-400 hover:text-emerald-500 transition-colors rounded cursor-pointer hover:bg-neutral-200/50 dark:hover:bg-white/5"
                 title="Create file in folder"
+                aria-label="Create file in folder"
               >
                 <Plus size={11} />
               </button>
@@ -269,6 +272,7 @@ export default function FileTree({
                 onClick={() => setAddingFolderParent(node.fullPath)}
                 className="p-1 text-neutral-400 hover:text-accent transition-colors rounded cursor-pointer hover:bg-neutral-200/50 dark:hover:bg-white/5"
                 title="Add subset folder"
+                aria-label="Add subset folder"
               >
                 <FolderPlus size={11} />
               </button>
@@ -281,6 +285,7 @@ export default function FileTree({
                 }}
                 className="p-1 text-neutral-400 hover:text-rose-500 transition-colors rounded cursor-pointer hover:bg-neutral-200/50 dark:hover:bg-white/5"
                 title="Delete folder and contents"
+                aria-label="Delete folder and contents"
               >
                 <Trash2 size={11} />
               </button>
@@ -307,6 +312,7 @@ export default function FileTree({
             <button
               type="submit"
               className="p-0.5 text-emerald-500 hover:bg-emerald-500/10 rounded cursor-pointer"
+              aria-label="Confirm create folder"
             >
               <Check size={11} />
             </button>
@@ -314,6 +320,7 @@ export default function FileTree({
               type="button"
               onClick={() => setAddingFolderParent(null)}
               className="p-0.5 text-neutral-400 hover:bg-neutral-300 dark:hover:bg-[#1f1f23] rounded cursor-pointer"
+              aria-label="Cancel create folder"
             >
               <X size={11} />
             </button>
@@ -325,12 +332,12 @@ export default function FileTree({
           <div className="space-y-0.5">
             {/* 1. Recurse Subfolders */}
             {Object.values(node.subfolders)
-              .sort((a, b) => a.name.localeCompare(b.name))
+              .sort((a: any, b: any) => a.name.localeCompare(b.name))
               .map((subNode) => renderFolderNode(subNode, depth + 1))}
 
             {/* 2. List Files at this folder layer */}
             {node.files
-              .sort((a, b) => a.name.localeCompare(b.name))
+              .sort((a: any, b: any) => a.name.localeCompare(b.name))
               .map((file) => renderFileItem(file, depth + 1))}
           </div>
         )}
@@ -384,6 +391,7 @@ export default function FileTree({
                 setConfirmDeleteFileId(null);
               }}
               className="p-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white cursor-pointer"
+              aria-label="Confirm delete document draft"
             >
               <Check size={9} />
             </button>
@@ -391,6 +399,7 @@ export default function FileTree({
               type="button"
               onClick={() => setConfirmDeleteFileId(null)}
               className="p-0.5 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-400 hover:text-neutral-200 cursor-pointer"
+              aria-label="Cancel delete document draft"
             >
               <X size={9} />
             </button>
@@ -407,6 +416,7 @@ export default function FileTree({
             }}
             className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-rose-500 transition-opacity p-0.5 rounded cursor-pointer hover:bg-neutral-200/50 dark:hover:bg-white/5"
             title="Delete document draft"
+            aria-label="Delete document draft"
           >
             <Trash2 size={11} fill="none" />
           </button>
@@ -452,6 +462,7 @@ export default function FileTree({
             id="btn-confirm-root-folder"
             type="submit"
             className="p-1 text-emerald-500 hover:bg-emerald-500/10 rounded cursor-pointer"
+            aria-label="Confirm create root folder"
           >
             <Check size={11} />
           </button>
@@ -459,6 +470,7 @@ export default function FileTree({
             type="button"
             onClick={() => setAddingFolderParent(null)}
             className="p-1 text-neutral-400 hover:bg-neutral-300 dark:hover:bg-[#1f1f23] rounded cursor-pointer"
+            aria-label="Cancel create root folder"
           >
             <X size={11} />
           </button>
@@ -476,7 +488,7 @@ export default function FileTree({
         {tree.files.length > 0 && (
           <div className="space-y-0.5 border-t border-neutral-200/20 dark:border-white/5 pt-1 mt-1">
             {tree.files
-              .sort((a, b) => a.name.localeCompare(b.name))
+              .sort((a: any, b: any) => a.name.localeCompare(b.name))
               .map((file) => renderFileItem(file, 0))}
           </div>
         )}
