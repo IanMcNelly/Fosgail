@@ -92,6 +92,12 @@ describe('simpleHash', () => {
 // calculateWordCharCount
 // -------------------------------------------------------
 describe('calculateWordCharCount', () => {
+    it('correctly counts words separated by unicode whitespace', () => {
+      // Includes NBSP, En Quad, Em Quad, Thin Space. Note: \u200B (Zero-width space) is NOT matched by \s in JS.
+      const { wordCount } = calculateWordCharCount('Hello\u00A0world\u2000this\u2001is\u2009a\u3000test');
+      expect(wordCount).toBe(6);
+    });
+
   it('counts words correctly in normal prose', () => {
     const { wordCount } = calculateWordCharCount('Hello world this is a test');
     expect(wordCount).toBe(6);
