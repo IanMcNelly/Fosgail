@@ -62,6 +62,8 @@ export default function OutlinePanel({ content, themeInfo, onClose }: OutlinePan
           type="button"
           onClick={onClose}
           className="p-0.5 rounded-md text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-200/50 dark:hover:bg-white/8 transition-colors cursor-pointer"
+          aria-label="Close outline"
+          title="Close outline"
         >
           <X size={13} />
         </button>

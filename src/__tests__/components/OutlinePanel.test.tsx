@@ -80,12 +80,11 @@ describe('OutlinePanel', () => {
   it('calls onClose when the X button is clicked', () => {
     const onClose = vi.fn();
     render(<OutlinePanel content={sampleContent} themeInfo={darkTheme} onClose={onClose} />);
-    fireEvent.click(screen.getByRole('button', { name: '' })); // X button has no text
-    // Find the close button by its location in the header
-    const buttons = screen.getAllByRole('button');
-    // Close button is last in the header
-    const closeBtn = buttons.find(b => b.querySelector('svg')); // SVG-only button
-    if (closeBtn) fireEvent.click(closeBtn);
+
+    // Find the close button by its accessible name
+    const closeBtn = screen.getByRole('button', { name: 'Close outline' });
+    fireEvent.click(closeBtn);
+
     // onClose should have been called
     expect(onClose).toHaveBeenCalled();
   });
