@@ -9,3 +9,7 @@
 **Vulnerability:** The `src-tauri/tauri.conf.json` had `"csp": null`, disabling the Content Security Policy for the Tauri frontend entirely.
 **Learning:** By disabling CSP, the application relies solely on HTML sanitization (like DOMPurify) and React's escaping to prevent XSS. A single mistake could lead to untrusted script execution. In desktop apps like Tauri, XSS can lead to RCE because the frontend has IPC access to the system.
 **Prevention:** Always define a strict CSP for Tauri applications. Ensure `"csp"` is configured securely instead of being disabled, restricting scripts and resources to `'self'` and explicitly needed origins (e.g., `ipc:`).
+## 2025-03-08 - [High] Fix XSS Vulnerability via Malicious Markdown Links
+**Vulnerability:** React-Markdown and standard Markdown rendering doesn't prevent rendering of `javascript:`, `data:`, or `vbscript:` protocols in `href` links by default. Malicious markdown files could include XSS payloads executed when users click on a link.
+**Learning:** React-Markdown components and `<a>` renderers need explicit `href` sanitization. DOMPurify is used to sanitize HTML tags and SVG in other components, but `<a>` properties were not verified.
+**Prevention:** Always validate `href` attributes in `<a>` tags before passing them down in React components rendering user-generated or parsed content. Use protocol allowlisting or explicitly deny list malicious protocols such as `javascript:`, `vbscript:`, and `data:`.

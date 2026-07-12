@@ -190,13 +190,22 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
 
       // Open links in external browser or internal navigation
       a({ node, href, children, ...props }: any) {
-        if (href && !href.startsWith('http') && href.endsWith('.md')) {
+        // SECURE: Prevent javascript: and other malicious URIs in links
+        let safeHref = href || '';
+        if (safeHref) {
+          const lowerHref = safeHref.toLowerCase();
+          if (lowerHref.startsWith('javascript:') || lowerHref.startsWith('vbscript:') || lowerHref.startsWith('data:')) {
+            safeHref = 'about:blank';
+          }
+        }
+
+        if (safeHref && !safeHref.startsWith('http') && safeHref.endsWith('.md')) {
           return (
             <a
-              href={href}
+              href={safeHref}
               onClick={(e) => {
                 e.preventDefault();
-                if (onNavigate) onNavigate(href);
+                if (onNavigate) onNavigate(safeHref);
               }}
               className="cursor-pointer"
               {...props}
@@ -206,7 +215,7 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
           );
         }
         return (
-          <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+          <a href={safeHref} target="_blank" rel="noopener noreferrer" {...props}>
             {children}
           </a>
         );
