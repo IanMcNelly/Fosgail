@@ -4,3 +4,6 @@
 ## 2025-03-09 - Extracted CopyButton in MarkdownOutput to prevent full re-renders
 **Learning:** The Markdown component used a single `copiedCodeId` state in the parent, meaning clicking "Copy" triggered a re-render of the entire expensive markdown view.
 **Action:** Extract small interactive UI elements inside memoized or expensive lists/renderers into their own local state components to isolate updates.
+## 2024-05-18 - Avoid array allocation on every keystroke
+**Learning:** Using `value.split('\n').length` inside a React component's render function (like EditorArea) forces the engine to allocate an array containing every line of the document on every single keystroke. This causes excessive memory allocation and triggers frequent garbage collection, creating typing latency in large documents.
+**Action:** Use an iterative approach to count character occurrences (e.g. iterating over the string and checking `charCodeAt`) combined with `useMemo` so that derived arrays (like `lineNumbers`) are only reallocated when the document value actually changes.

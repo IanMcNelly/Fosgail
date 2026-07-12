@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { 
   Bold, Italic, Link, List, CheckSquare, 
   Code, Table, Heading1, ZoomIn, ZoomOut, Save,
@@ -108,8 +108,21 @@ export default function EditorArea({
   }, [syncScrollPercent]);
 
   // Generate line numbers Array
-  const lineCount = value.split('\n').length;
-  const lineNumbers = Array.from({ length: Math.max(lineCount, 1) }, (_, i) => i + 1);
+  // ⚡ Bolt Optimization: Calculate line count iteratively to avoid large string splitting
+  // which causes heavy garbage collection pauses on large files during rapid typing.
+  const lineCount = useMemo(() => {
+    let count = 1;
+    for (let i = 0; i < value.length; i++) {
+      if (value.charCodeAt(i) === 10) { // 10 is the ASCII code for '\n'
+        count++;
+      }
+    }
+    return count;
+  }, [value]);
+
+  const lineNumbers = useMemo(() => {
+    return Array.from({ length: Math.max(lineCount, 1) }, (_, i) => i + 1);
+  }, [lineCount]);
 
   // Helper formatting injectors
   const insertMarkdown = (prefix: string, suffix: string = '') => {
