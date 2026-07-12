@@ -780,6 +780,7 @@ export default function App() {
               className={`p-1.5 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors ${!isSidebarOpen ? 'text-accent' : 'text-neutral-400'}`}
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               type="button"
+              aria-label="Toggle sidebar"
             >
               <Menu size={16} />
             </motion.button>
@@ -1064,6 +1065,7 @@ export default function App() {
                   type="button"
                   onClick={() => setActiveModal(null)}
                   className="p-1 rounded-md hover:bg-neutral-200/50 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 cursor-pointer transition-colors"
+                  aria-label="Close modal"
                 >
                   <X size={15} />
                 </button>
