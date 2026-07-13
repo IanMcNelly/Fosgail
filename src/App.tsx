@@ -346,6 +346,12 @@ export default function App() {
 
   // Add a new registered directory
   const handleAddFolder = async (folderPath: string) => {
+    // SECURE: Prevent directory traversal outside the workspace
+    if (folderPath.includes('..') || folderPath.startsWith('/') || folderPath.startsWith('\\')) {
+      alert("Invalid folder path.");
+      return;
+    }
+
     if (workspacePath) {
       try {
         await mkdir(normalizePath(`${workspacePath}/${folderPath}`), { recursive: true });
@@ -361,6 +367,12 @@ export default function App() {
 
   // Remove a folder and delete its contents from the in-memory store
   const handleRemoveFolder = async (folderPath: string) => {
+    // SECURE: Prevent directory traversal to delete unintended folders
+    if (folderPath.includes('..') || folderPath.startsWith('/') || folderPath.startsWith('\\')) {
+      alert("Invalid folder path.");
+      return;
+    }
+
     if (workspacePath) {
       try {
         const confirm = await ask(`Are you sure you want to permanently delete the folder "${folderPath}" and all its contents? This cannot be undone.`, { title: 'Confirm Deletion', kind: 'warning' });
@@ -403,6 +415,12 @@ export default function App() {
 
   // Move a document into another folder directory
   const handleMoveFileFolder = async (fileId: string, folderPath: string) => {
+    // SECURE: Prevent path traversal when moving files
+    if (folderPath.includes('..') || folderPath.startsWith('/') || folderPath.startsWith('\\')) {
+      alert("Invalid folder path.");
+      return;
+    }
+
     const fileToMove = useAppStore.getState().files.find(f => f.id === fileId);
     if (!fileToMove) return;
 
@@ -557,6 +575,12 @@ export default function App() {
 
   // Rename the active file (with duplicate check)
   const handleRenameActiveFile = async (newName: string) => {
+    // SECURE: Prevent path traversal to rename files outside current directory
+    if (newName.includes('/') || newName.includes('\\') || newName.includes('..')) {
+      alert("Invalid file name.");
+      return;
+    }
+
     if (!activeFileId) return;
     const currentFile = files.find((f) => f.id === activeFileId);
     if (!currentFile) return;
