@@ -13,3 +13,8 @@
 **Vulnerability:** React-Markdown and standard Markdown rendering doesn't prevent rendering of `javascript:`, `data:`, or `vbscript:` protocols in `href` links by default. Malicious markdown files could include XSS payloads executed when users click on a link.
 **Learning:** React-Markdown components and `<a>` renderers need explicit `href` sanitization. DOMPurify is used to sanitize HTML tags and SVG in other components, but `<a>` properties were not verified.
 **Prevention:** Always validate `href` attributes in `<a>` tags before passing them down in React components rendering user-generated or parsed content. Use protocol allowlisting or explicitly deny list malicious protocols such as `javascript:`, `vbscript:`, and `data:`.
+
+## 2024-05-18 - Path Traversal in File Operations
+**Vulnerability:** Found missing path sanitization in file and folder operations (`handleRenameActiveFile`, `handleAddFolder`, `handleRemoveFolder`, `handleMoveFileFolder`), which allowed users to input strings containing `..` to traverse directories, potentially deleting or moving sensitive files outside the workspace.
+**Learning:** These operations accepted raw path inputs derived directly from user input (like renaming a file in EditorArea) and concatenated them directly into Tauri's filesystem APIs without validation. Tauri `plugin-fs` executes actions relative to the `workspacePath` but blindly appending `..` overrides directory confinement.
+**Prevention:** Always validate all raw user-supplied strings that will construct filesystem paths. Deny file names containing `/`, `\`, or `..`, and block folder manipulation paths containing `..` and starting with `/` or `\`.
