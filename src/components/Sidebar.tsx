@@ -81,6 +81,7 @@ export default function Sidebar({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search documents..."
+            aria-label="Search documents"
             className={`w-full pl-7 pr-3 py-1 border rounded-md text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500/50 text-neutral-700 dark:text-neutral-300 placeholder-neutral-400 ${
               themeInfo.isDark ? 'bg-[#0F0F11] border-white/5' : 'bg-neutral-100/50 border-neutral-200'
             }`}
