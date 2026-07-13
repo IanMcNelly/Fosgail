@@ -69,7 +69,11 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
   const isSyncingRef = useRef(false);
 
   // Detect mermaid usage — only import the library if needed
-  const hasMermaid = useMemo(() => content.includes('```mermaid'), [content]);
+  const onNavigateRef = useRef(onNavigate);
+
+  useEffect(() => {
+    onNavigateRef.current = onNavigate;
+  }, [onNavigate]);
 
 
   // Apply synchronized scroll from the editor
@@ -125,7 +129,7 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
           const language = match[1];
 
           // Handle mermaid diagrams — lazy-loaded
-          if (language === 'mermaid' && hasMermaid) {
+          if (language === 'mermaid') {
             return (
               <Suspense fallback={<div className="p-4 text-xs text-neutral-400 italic">Rendering diagram...</div>}>
                 <MermaidBlock code={value} />
@@ -205,7 +209,7 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
               href={safeHref}
               onClick={(e) => {
                 e.preventDefault();
-                if (onNavigate) onNavigate(safeHref);
+                if (onNavigateRef.current) onNavigateRef.current(safeHref);
               }}
               className="cursor-pointer"
               {...props}
@@ -238,7 +242,7 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
         return <input {...props} />;
       },
     };
-  }, [hasMermaid, onNavigate]);
+  }, []);
 
   return (
     <div
