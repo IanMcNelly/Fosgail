@@ -1,15 +1,52 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   normalizePath,
   slugify,
   simpleHash,
   calculateWordCharCount,
   parseHeadings,
+  throttle,
 } from '../../utils';
 
 // -------------------------------------------------------
 // normalizePath
 // -------------------------------------------------------
+describe('throttle', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('should limit function calls to one per time window', () => {
+    const mockFn = vi.fn();
+    const throttledFn = throttle(mockFn, 100);
+
+    throttledFn(); // 1st call executes immediately
+    throttledFn(); // 2nd call is throttled, but saves args
+    throttledFn(); // 3rd call is throttled, overwrites args
+
+    expect(mockFn).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(101); // Time passes, trailing edge fires
+
+    expect(mockFn).toHaveBeenCalledTimes(2);
+
+    throttledFn(); // Call after window executes immediately again
+    expect(mockFn).toHaveBeenCalledTimes(3);
+  });
+
+  it('should pass arguments to the throttled function', () => {
+    const mockFn = vi.fn();
+    const throttledFn = throttle(mockFn, 100);
+
+    throttledFn('arg1', 42);
+    expect(mockFn).toHaveBeenCalledWith('arg1', 42);
+  });
+});
+
 describe('normalizePath', () => {
   it('converts Windows backslashes to forward slashes', () => {
     expect(normalizePath('C:\\Users\\foo\\bar.md')).toBe('C:/Users/foo/bar.md');

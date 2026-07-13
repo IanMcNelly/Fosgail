@@ -21,7 +21,7 @@ import { MarkdownFile, CSSTheme } from './types';
 import { BUILTIN_THEMES, GENERAL_THEMES_INFO } from './themes';
 import { INITIAL_FILES } from './samples';
 import { useAppStore } from './store/useAppStore';
-import { normalizePath, calculateWordCharCount } from './utils';
+import { normalizePath, calculateWordCharCount, throttle } from './utils';
 import Sidebar from './components/Sidebar';
 import EditorArea from './components/EditorArea';
 import MarkdownOutput from './components/MarkdownOutput';
@@ -59,6 +59,12 @@ export default function App() {
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   // Synchronized scroll percentage (0–1)
   const [syncScrollPercent, setSyncScrollPercent] = useState(0);
+
+  // ⚡ Bolt Optimization: Throttle the scroll sync state update to prevent the entire
+  // app (Sidebar, Editor, Preview) from re-rendering synchronously on every scroll frame.
+  const handleSyncScroll = useMemo(() => throttle((pct: number) => {
+    setSyncScrollPercent(pct);
+  }, 50), []);
 
   // Active Theme details computed
   const combinedThemes = useMemo(() => {
@@ -943,7 +949,7 @@ export default function App() {
                     onMoveFile={(folderPath) => handleMoveFileFolder(activeMarkdownFile.id, folderPath)}
                     isSyncScrollEnabled={isSyncScrollEnabled}
                     syncScrollPercent={isSyncScrollEnabled && editorMode === 'split' ? syncScrollPercent : null}
-                    onSyncScroll={setSyncScrollPercent}
+                    onSyncScroll={handleSyncScroll}
                   />
                 </div>
               )}
@@ -955,7 +961,7 @@ export default function App() {
                     content={activeMarkdownFile.content}
                     theme={activeTheme}
                     syncScrollPercent={isSyncScrollEnabled && editorMode === 'split' ? syncScrollPercent : null}
-                    onSyncScroll={isSyncScrollEnabled && editorMode === 'split' ? setSyncScrollPercent : undefined}
+                    onSyncScroll={isSyncScrollEnabled && editorMode === 'split' ? handleSyncScroll : undefined}
                     onNavigate={handleNavigate}
                   />
                   {/* Floating Outline Panel */}
