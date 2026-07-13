@@ -82,3 +82,33 @@ export function parseHeadings(content: string): ParsedHeading[] {
   }
   return result;
 }
+
+/**
+ * Throttle function to limit the execution rate of a callback.
+ * ⚡ Bolt Optimization: Limits high-frequency events (like scroll)
+ * from triggering too many state updates.
+ * Implements a leading and trailing edge throttle to ensure the final
+ * state is always captured.
+ */
+export function throttle<T extends (...args: any[]) => void>(func: T, limit: number): T {
+  let inThrottle: boolean;
+  let lastArgs: any[] | null;
+  let lastThis: any;
+
+  return function(this: any, ...args: any[]) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => {
+        inThrottle = false;
+        if (lastArgs) {
+          func.apply(lastThis, lastArgs);
+          lastArgs = null;
+        }
+      }, limit);
+    } else {
+      lastArgs = args;
+      lastThis = this;
+    }
+  } as T;
+}
