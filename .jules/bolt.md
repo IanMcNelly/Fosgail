@@ -15,3 +15,6 @@
 ## 2024-05-15 - Prevent unnecessary DOM remounts in ReactMarkdown
 **Learning:** Using inline functions or external dependencies (like `onNavigate`) inside a `useMemo` that generates custom components for a rich text renderer (like `react-markdown`) causes the components object to change reference on every keystroke. This causes React to completely unmount and remount every DOM node inside the preview on every keystroke, leading to huge layout thrashing and poor performance.
 **Action:** Always decouple state changes from render components creation. Use a `useRef` to store the latest external state/functions (like `onNavigate`), and remove them from the `useMemo` dependency array to keep the `components` map reference stable throughout the component lifecycle.
+## 2025-03-09 - Avoid string splitting on newlines when parsing whole documents
+**Learning:** Calling `content.split('\n')` on large markdown documents allocates a massive temporary array of strings. When checking regex on each line individually (e.g. `line.match`), this places heavy pressure on memory and blocks the main thread.
+**Action:** Instead of splitting the string to parse lines, use a multiline regular expression (`/gm`) directly with `.exec()` in a `while` loop on the entire string. This matches line-by-line efficiently without allocating the intermediate array.

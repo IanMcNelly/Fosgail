@@ -70,16 +70,17 @@ export interface ParsedHeading {
 }
 
 export function parseHeadings(content: string): ParsedHeading[] {
-  const lines = content.split('\n');
   const result: ParsedHeading[] = [];
-  for (const line of lines) {
-    const match = line.match(/^(#{1,3})\s+(.+)/);
-    if (match) {
-      const level = match[1].length as 1 | 2 | 3;
-      const text = match[2].replace(/[*_`~]/g, '').trim();
-      result.push({ level, text, slug: slugify(text) });
-    }
+  // ⚡ Bolt Optimization: Use multiline regex to avoid splitting the entire document into an array
+  const regex = /^(#{1,3})[ \t]+(.+)/gm;
+  let match;
+
+  while ((match = regex.exec(content)) !== null) {
+    const level = match[1].length as 1 | 2 | 3;
+    const text = match[2].replace(/[*_`~]/g, '').trim();
+    result.push({ level, text, slug: slugify(text) });
   }
+
   return result;
 }
 
