@@ -166,15 +166,6 @@ export default function FileTree({
         return node.files.length > 0 || Object.keys(node.subfolders).length > 0;
       };
       pruneEmpty(root);
-
-      // Auto-expand any active nodes containing results during search
-      const autoExpandAll = (node: TreeNode) => {
-        if (node.fullPath) {
-          setExpandedFolders((prev) => ({ ...prev, [node.fullPath]: true }));
-        }
-        Object.values(node.subfolders).forEach(autoExpandAll);
-      };
-      autoExpandAll(root);
     }
 
     return root;
@@ -197,7 +188,8 @@ export default function FileTree({
 
   // Render a single folder recursively
   const renderFolderNode = (node: TreeNode, depth: number) => {
-    const isExpanded = !!expandedFolders[node.fullPath];
+    // Auto-expand all folders when searching, otherwise use the stored state
+    const isExpanded = !!searchQuery.trim() || !!expandedFolders[node.fullPath];
     const hasChildren = Object.keys(node.subfolders).length > 0 || node.files.length > 0;
     const isConfirmingDelete = confirmDeletePath === node.fullPath;
 
