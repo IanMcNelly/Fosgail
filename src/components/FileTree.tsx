@@ -31,6 +31,7 @@ interface FileTreeProps {
   };
   searchQuery: string;
   scanErrors?: string[];
+  onRefreshWorkspace: () => void;
 }
 
 interface TreeNode {
@@ -52,6 +53,7 @@ export default function FileTree({
   themeInfo,
   searchQuery,
   scanErrors,
+  onRefreshWorkspace,
 }: FileTreeProps) {
   // Folder open/collapsed states
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
@@ -180,22 +182,27 @@ export default function FileTree({
     return root;
   }, [files, folders, searchQuery]);
 
-  // Handler for directory creation trigger
+  // Handle new folder submit
   const handleCreateFolder = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim()) return;
-    const parentPath = addingFolderParent || '';
-    const fullFolderPath = parentPath 
-      ? `${parentPath}/${newFolderName.trim()}` 
-      : newFolderName.trim();
-
-    onAddFolder(fullFolderPath);
-    setExpandedFolders((prev) => ({ ...prev, [parentPath]: true, [fullFolderPath]: true }));
-    setNewFolderName('');
+    
+    // Clean name
+    const safeName = newFolderName.trim().replace(/[/\\?%*:|"<>]/g, '-');
+    const folderPath = addingFolderParent ? `${addingFolderParent}/${safeName}` : safeName;
+    
+    onAddFolder(folderPath);
+    
     setAddingFolderParent(null);
+    setNewFolderName('');
+    
+    // Auto-expand the newly created folder's parent
+    if (addingFolderParent) {
+      setExpandedFolders((prev) => ({ ...prev, [addingFolderParent]: true }));
+    }
   };
 
-  // Render a single folder recursively
+  // Render a folder node recursively
   const renderFolderNode = (node: TreeNode, depth: number) => {
     const isExpanded = !!expandedFolders[node.fullPath];
     const hasChildren = Object.keys(node.subfolders).length > 0 || node.files.length > 0;
@@ -203,97 +210,100 @@ export default function FileTree({
 
     return (
       <div key={node.fullPath} className="space-y-0.5">
-        {/* Folder row item */}
-        <motion.div
-          id={`folder-row-${node.fullPath.replace(/\//g, '-')}`}
-          whileHover={{ scale: 1.01, originX: 0 }}
-          whileTap={{ scale: 0.99 }}
-          className="group flex items-center justify-between py-1.5 px-2 hover:bg-neutral-200/40 dark:hover:bg-white/5 rounded-lg cursor-pointer text-xs select-none transition-colors"
+        <div 
+          onClick={(e) => toggleFolder(node.fullPath, e)}
+          className={`group flex items-center justify-between p-1 rounded-lg cursor-pointer transition-colors text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100/50 dark:hover:bg-white/5`}
           style={{ paddingLeft: `${depth * 10 + 6}px` }}
-          onClick={() => toggleFolder(node.fullPath)}
         >
-          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            <span className="text-neutral-400">
-              {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          <div className="flex items-center gap-1.5 overflow-hidden">
+            <span className="text-neutral-400 shrink-0">
+              {hasChildren ? (
+                isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />
+              ) : (
+                <span className="w-3" /> // spacer
+              )}
             </span>
-            <span className={themeInfo.isDark ? "text-accent" : "text-accent"}>
-              {isExpanded ? <FolderOpen size={13} fill="currentColor" fillOpacity={0.15} /> : <Folder size={13} fill="currentColor" fillOpacity={0.1} />}
-            </span>
-            <span className="font-semibold truncate text-neutral-700 dark:text-neutral-200">
+            {isExpanded ? (
+              <FolderOpen size={12} className="text-accent shrink-0" />
+            ) : (
+              <Folder size={12} className="text-accent shrink-0" />
+            )}
+            <span className="text-[11px] font-semibold truncate select-none">
               {node.name}
-            </span>
-            <span className="text-[9px] text-neutral-400 font-mono px-1 bg-neutral-200/50 dark:bg-white/5 rounded-sm">
-              {node.files.length + Object.keys(node.subfolders).length}
             </span>
           </div>
 
-          {/* If confirming folder deletion (safely) */}
-          {isConfirmingDelete ? (
-            <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-              <span className="text-[10px] text-rose-500 font-bold mr-1">Wipe folder?</span>
-              <button
-                id={`btn-confirm-delete-folder-${node.fullPath.replace(/\//g, '-')}`}
-                type="button"
-                onClick={() => {
-                  onRemoveFolder(node.fullPath);
-                  setConfirmDeletePath(null);
-                }}
-                className="p-1 rounded bg-rose-600 hover:bg-rose-500 text-white cursor-pointer"
-                title="Wipe files"
-                aria-label="Confirm wipe folder"
-              >
-                <Check size={10} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmDeletePath(null)}
-                className="p-1 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-400 hover:text-neutral-200 cursor-pointer"
-                aria-label="Cancel wipe folder"
-              >
-                <X size={10} />
-              </button>
-            </div>
-          ) : (
-            /* Action button overlays */
-            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-              <button
-                id={`btn-new-file-in-folder-${node.fullPath.replace(/\//g, '-')}`}
-                type="button"
-                onClick={() => onNewFile(node.fullPath)}
-                className="p-1 text-neutral-400 hover:text-emerald-500 transition-colors rounded cursor-pointer hover:bg-neutral-200/50 dark:hover:bg-white/5"
-                title="Create file in folder"
-                aria-label="Create file in folder"
-              >
-                <Plus size={11} />
-              </button>
-              <button
-                id={`btn-add-subfolder-${node.fullPath.replace(/\//g, '-')}`}
-                type="button"
-                onClick={() => setAddingFolderParent(node.fullPath)}
-                className="p-1 text-neutral-400 hover:text-accent transition-colors rounded cursor-pointer hover:bg-neutral-200/50 dark:hover:bg-white/5"
-                title="Add subset folder"
-                aria-label="Add subset folder"
-              >
-                <FolderPlus size={11} />
-              </button>
-              <button
-                id={`btn-delete-folder-${node.fullPath.replace(/\//g, '-')}`}
-                type="button"
-                onClick={() => {
-                  setConfirmDeletePath(node.fullPath);
-                  setConfirmDeleteFileId(null);
-                }}
-                className="p-1 text-neutral-400 hover:text-rose-500 transition-colors rounded cursor-pointer hover:bg-neutral-200/50 dark:hover:bg-white/5"
-                title="Delete folder and contents"
-                aria-label="Delete folder and contents"
-              >
-                <Trash2 size={11} />
-              </button>
-            </div>
-          )}
-        </motion.div>
+          <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+            {isConfirmingDelete ? (
+               <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+               <span className="text-[9px] text-rose-500 font-mono font-bold mr-0.5">Delete?</span>
+               <button
+                 type="button"
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   onRemoveFolder(node.fullPath);
+                   setConfirmDeletePath(null);
+                 }}
+                 className="p-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white cursor-pointer"
+               >
+                 <Check size={9} />
+               </button>
+               <button
+                 type="button"
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   setConfirmDeletePath(null);
+                 }}
+                 className="p-0.5 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-400 hover:text-neutral-200 cursor-pointer"
+               >
+                 <X size={9} />
+               </button>
+             </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  title="New File in Folder"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedFolders((prev) => ({ ...prev, [node.fullPath]: true }));
+                    onNewFile(node.fullPath);
+                  }}
+                  className="p-1 rounded text-neutral-400 hover:text-accent hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer"
+                >
+                  <Plus size={11} />
+                </button>
+                <button
+                  type="button"
+                  title="New Subfolder"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedFolders((prev) => ({ ...prev, [node.fullPath]: true }));
+                    setAddingFolderParent(node.fullPath);
+                    setNewFolderName('');
+                  }}
+                  className="p-1 rounded text-neutral-400 hover:text-accent hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer"
+                >
+                  <FolderPlus size={11} />
+                </button>
+                <button
+                  type="button"
+                  title="Delete Folder"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDeletePath(node.fullPath);
+                    setConfirmDeleteFileId(null);
+                  }}
+                  className="p-1 rounded text-neutral-400 hover:text-rose-500 hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer"
+                >
+                  <Trash2 size={11} />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
 
-        {/* Inline child folder input creation */}
+        {/* Inline new folder input for THIS specific parent */}
         {addingFolderParent === node.fullPath && (
           <form
             onSubmit={handleCreateFolder}
@@ -370,7 +380,10 @@ export default function FileTree({
             className={isActive ? 'text-emerald-500 shrink-0' : 'text-neutral-400 shrink-0'}
           />
           <div className="truncate text-xs leading-tight">
-            <div className="font-semibold truncate">{file.name}</div>
+            <div className="font-semibold flex items-center truncate">
+              <span className="truncate">{file.name}</span>
+              {file.isDirty && <span className="ml-1.5 shrink-0 inline-block w-1.5 h-1.5 rounded-full bg-orange-400" title="Unsaved changes"></span>}
+            </div>
             <div className="text-[8px] text-neutral-400 flex items-center gap-1.5 mt-0.5">
               <span>{file.wordCount} words</span>
               {file.isExample && <span className="px-1.5 py-0.2 text-[7px] text-accent/80 bg-accent/10 rounded">Sample</span>}
@@ -432,15 +445,25 @@ export default function FileTree({
         <span className="text-[9px] font-bold tracking-wider uppercase text-neutral-400 block">
           Workspace Folders Tree
         </span>
-        <button
-          id="btn-trigger-root-folder"
-          type="button"
-          onClick={() => setAddingFolderParent(addingFolderParent === "" ? null : "")}
-          className="text-[9px] font-bold text-accent hover:text-accent hover:underline flex items-center gap-1 cursor-pointer"
-        >
-          <FolderPlus size={10} />
-          New Folder
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onRefreshWorkspace}
+            className="text-[9px] font-bold text-accent hover:text-accent hover:underline flex items-center gap-1 cursor-pointer"
+            title="Refresh from disk"
+          >
+            Refresh
+          </button>
+          <button
+            id="btn-trigger-root-folder"
+            type="button"
+            onClick={() => setAddingFolderParent(addingFolderParent === "" ? null : "")}
+            className="text-[9px] font-bold text-accent hover:text-accent hover:underline flex items-center gap-1 cursor-pointer"
+          >
+            <FolderPlus size={10} />
+            New Folder
+          </button>
+        </div>
       </div>
 
       {/* Adding folder input at Root layer */}

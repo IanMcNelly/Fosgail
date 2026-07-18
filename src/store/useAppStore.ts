@@ -71,7 +71,7 @@ export const useAppStore = create<AppState>()(
       // Feature flags
       isSyncScrollEnabled: true,
       isOutlinePanelOpen: false,
-      isAutoSaveEnabled: false,
+      isAutoSaveEnabled: true,
 
       setFiles: (update) => set({ files: applyUpdate(update, get().files) }),
       setActiveFileId: (id) => {

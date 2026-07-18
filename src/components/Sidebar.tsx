@@ -39,6 +39,7 @@ interface SidebarProps {
   onShowShortcuts: () => void;
   onShowSettings: () => void;
   scanErrors?: string[];
+  onRefreshWorkspace: () => void;
 }
 
 export default function Sidebar({
@@ -56,6 +57,7 @@ export default function Sidebar({
   onShowShortcuts,
   onShowSettings,
   scanErrors,
+  onRefreshWorkspace,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -103,6 +105,7 @@ export default function Sidebar({
           themeInfo={themeInfo}
           searchQuery={searchQuery}
           scanErrors={scanErrors}
+          onRefreshWorkspace={onRefreshWorkspace}
         />
       </div>
 
