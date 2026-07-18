@@ -68,6 +68,11 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
   const viewportRef = useRef<HTMLDivElement>(null);
   const isSyncingRef = useRef(false);
 
+  // ⚡ Bolt Optimization: Defer the expensive Markdown parsing and rendering
+  // to a background transition. This ensures that the main thread remains
+  // responsive during rapid typing in the editor, preventing input stutter.
+  const deferredContent = React.useDeferredValue(content);
+
   // Detect mermaid usage — only import the library if needed
   const onNavigateRef = useRef(onNavigate);
 
@@ -252,7 +257,7 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
       className={`w-full h-full overflow-y-auto ${syncScrollPercent !== null ? 'hide-scrollbar' : ''}`}
     >
       <div className="markdown-body min-h-full w-full max-w-none px-6 py-6 md:px-12 md:py-10 transition-all duration-300">
-        <MemoizedMarkdown content={content} components={components} />
+        <MemoizedMarkdown content={deferredContent} components={components} />
       </div>
     </div>
   );
