@@ -115,6 +115,7 @@ export default function Sidebar({
           whileTap={{ scale: 0.98 }}
           onClick={onShowSettings}
           className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+          aria-label="App Settings and Themes"
         >
           <Settings size={13} className="text-pink-500" />
           <span className="font-semibold">App Settings & Themes</span>
@@ -126,6 +127,7 @@ export default function Sidebar({
           whileTap={{ scale: 0.98 }}
           onClick={onShowShortcuts}
           className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+          aria-label="Keyboard Shortcuts"
         >
           <HelpCircle size={13} className="text-amber-500" />
           <span className="font-semibold">Keyboard Shortcuts</span>

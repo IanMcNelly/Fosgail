@@ -9,3 +9,7 @@
 ## 2024-07-12 - Adding ARIA labels to structural app-level buttons
 **Learning:** Global UI controls like sidebar toggles, modal close buttons, and search inputs are critical for basic app navigation but frequently miss accessible names since they rely heavily on universally recognized icons (like hamburger menus or X marks).
 **Action:** Audit main structural layouts (App.tsx, Navigation, Sidebars) specifically for icon-only action buttons and standalone inputs.
+
+## 2024-03-24 - Adding ARIA labels to structural panel buttons
+**Learning:** Buttons within structural panels (like a Sidebar footer) that rely on a combination of icon and text for visual users can still benefit from explicit `aria-label` attributes to ensure screen readers announce their purpose clearly, especially when the text content contains ampersands or could be ambiguous.
+**Action:** When updating structural UI components, ensure that buttons opening modals or settings panels have explicit `aria-label` attributes for better accessibility.

@@ -202,7 +202,7 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
         // SECURE: Prevent javascript: and other malicious URIs in links
         let safeHref = href || '';
         if (safeHref) {
-          const lowerHref = safeHref.toLowerCase();
+          const lowerHref = safeHref.trim().toLowerCase();
           if (lowerHref.startsWith('javascript:') || lowerHref.startsWith('vbscript:') || lowerHref.startsWith('data:')) {
             safeHref = 'about:blank';
           }
@@ -228,6 +228,19 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
             {children}
           </a>
         );
+      },
+
+      img({ node, src, ...props }: any) {
+        // SECURE: Prevent javascript: and other malicious URIs in images
+        let safeSrc = src || '';
+        if (safeSrc) {
+          const lowerSrc = safeSrc.trim().toLowerCase();
+          if (lowerSrc.startsWith('javascript:') || lowerSrc.startsWith('vbscript:') || lowerSrc.startsWith('data:text/html')) {
+            safeSrc = '';
+          }
+        }
+
+        return <img src={safeSrc} {...props} />;
       },
 
       // Styled task list checkboxes
