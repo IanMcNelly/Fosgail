@@ -168,3 +168,17 @@ describe('MarkdownOutput — links', () => {
 });
 
 
+
+describe('MarkdownOutput - Security', () => {
+  it('should block javascript: links even with leading spaces', () => {
+    const { container } = render(<MarkdownOutput content="[Malicious]( javascript:alert('xss'))" theme={{ id: 'test', name: 'Test', description: '', isDark: false, cssRules: '' }} syncScrollPercent={null} />);
+    const link = container.querySelector('a');
+    expect(link).toHaveAttribute('href', '');
+  });
+
+  it('should block data: links even with leading spaces', () => {
+    const { container } = render(<MarkdownOutput content="[Malicious](\x00data:text/html,<script>alert(1)</script>)" theme={{ id: 'test', name: 'Test', description: '', isDark: false, cssRules: '' }} syncScrollPercent={null} />);
+    const link = container.querySelector('a');
+    expect(link).toHaveAttribute('href', '');
+  });
+});

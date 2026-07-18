@@ -197,7 +197,9 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
         // SECURE: Prevent javascript: and other malicious URIs in links
         let safeHref = href || '';
         if (safeHref) {
-          const lowerHref = safeHref.toLowerCase();
+          // Remove leading control characters and spaces to prevent bypasses like " javascript:"
+          const trimmedHref = safeHref.replace(/^[\s\x00-\x1F\x7F]+/, '');
+          const lowerHref = trimmedHref.toLowerCase();
           if (lowerHref.startsWith('javascript:') || lowerHref.startsWith('vbscript:') || lowerHref.startsWith('data:')) {
             safeHref = 'about:blank';
           }

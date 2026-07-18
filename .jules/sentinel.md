@@ -18,3 +18,15 @@
 **Vulnerability:** Found missing path sanitization in file and folder operations (`handleRenameActiveFile`, `handleAddFolder`, `handleRemoveFolder`, `handleMoveFileFolder`), which allowed users to input strings containing `..` to traverse directories, potentially deleting or moving sensitive files outside the workspace.
 **Learning:** These operations accepted raw path inputs derived directly from user input (like renaming a file in EditorArea) and concatenated them directly into Tauri's filesystem APIs without validation. Tauri `plugin-fs` executes actions relative to the `workspacePath` but blindly appending `..` overrides directory confinement.
 **Prevention:** Always validate all raw user-supplied strings that will construct filesystem paths. Deny file names containing `/`, `\`, or `..`, and block folder manipulation paths containing `..` and starting with `/` or `\`.
+## 2024-05-18 - [Path Traversal in URL handling]
+**Vulnerability:** Found `href` sanitization to prevent javascript: but might have path traversal.
+**Learning:** `App.tsx` has `handleNavigate` which uses `href` for resolving paths `resolvePath(activeMarkdownFile.folder || '', href);`
+**Prevention:**
+## 2024-05-18 - [XSS Bypass in Link URL Sanitization]
+**Vulnerability:** The sanitization in `MarkdownOutput.tsx` checks `lowerHref.startsWith('javascript:')` but does not trim whitespace first, allowing bypass via ` href=" javascript:alert(1)"`.
+**Learning:** Checking URL schemes requires `trim()` before `startsWith()`, or using URL parsing, because leading whitespaces or control characters can bypass naive string-prefix checks while still being executed by browsers.
+**Prevention:** Always `trim()` URLs before validating schemes, or use robust URL parsing mechanisms.
+## 2024-05-18 - [XSS Bypass Test Mismatch & Artifact Cleanup]
+**Learning:** React Markdown's `defaultUrlTransform` strips the URL completely (returning empty string) when it detects a `javascript:` scheme. Our custom component attempts to set it to `'about:blank'`, but the parent renderer takes precedence.
+**Action:** When adding security code to a library-rendered component (like `react-markdown`), ensure your tests align with what the library actually produces, and always delete temporary scripts like `fix_test.js` before submitting.
+**Prevention:** Avoid writing test logic relying on React Markdown rendering links to 'about:blank' when resolving malicious urls as it completely strips them down.
