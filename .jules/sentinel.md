@@ -22,3 +22,8 @@
 **Vulnerability:** The URL scheme validation in `src/components/MarkdownOutput.tsx` for markdown links was vulnerable to bypass. It checked `safeHref.toLowerCase().startsWith('javascript:')` without trimming leading whitespace. An attacker could use `[Click me]( javascript:alert(1))` (with leading space) which bypasses the check but is still executed by the browser when clicked.
 **Learning:** Browsers ignore leading whitespaces in `href` attributes, allowing spaces before malicious schemes like `javascript:` or `data:`. `.startsWith()` checks will fail to catch these if the input string is not trimmed first.
 **Prevention:** Always `trim()` user input before performing validation against prefixes or specific schemes like `javascript:`, `vbscript:`, and `data:`.
+
+## 2025-03-08 - [High] Fix XSS Vulnerability via Malicious Image Sources
+**Vulnerability:** React-Markdown components and image renderers do not inherently sanitize the `src` attributes of images. A malicious user could inject `javascript:` or `vbscript:` payloads into an image `src`, causing XSS execution when the image is rendered or interacted with.
+**Learning:** Similar to links (`<a>`), `<img src="...">` must have protocol validation. Relying only on DOMPurify elsewhere doesn't cover dynamic attribute generation in React properties.
+**Prevention:** Always validate `src` attributes in `<img>` tags before passing them to the React component tree. Apply an allow-list or deny-list for `javascript:`, `vbscript:`, and unsafe `data:` protocols.
