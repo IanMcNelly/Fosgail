@@ -18,3 +18,8 @@
 **Vulnerability:** Found missing path sanitization in file and folder operations (`handleRenameActiveFile`, `handleAddFolder`, `handleRemoveFolder`, `handleMoveFileFolder`), which allowed users to input strings containing `..` to traverse directories, potentially deleting or moving sensitive files outside the workspace.
 **Learning:** These operations accepted raw path inputs derived directly from user input (like renaming a file in EditorArea) and concatenated them directly into Tauri's filesystem APIs without validation. Tauri `plugin-fs` executes actions relative to the `workspacePath` but blindly appending `..` overrides directory confinement.
 **Prevention:** Always validate all raw user-supplied strings that will construct filesystem paths. Deny file names containing `/`, `\`, or `..`, and block folder manipulation paths containing `..` and starting with `/` or `\`.
+
+## 2025-03-08 - [High] Fix XSS Vulnerability via Malicious Image Sources
+**Vulnerability:** React-Markdown components and image renderers do not inherently sanitize the `src` attributes of images. A malicious user could inject `javascript:` or `vbscript:` payloads into an image `src`, causing XSS execution when the image is rendered or interacted with.
+**Learning:** Similar to links (`<a>`), `<img src="...">` must have protocol validation. Relying only on DOMPurify elsewhere doesn't cover dynamic attribute generation in React properties.
+**Prevention:** Always validate `src` attributes in `<img>` tags before passing them to the React component tree. Apply an allow-list or deny-list for `javascript:`, `vbscript:`, and unsafe `data:` protocols.

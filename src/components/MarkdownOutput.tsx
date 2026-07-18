@@ -225,6 +225,19 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
         );
       },
 
+      img({ node, src, ...props }: any) {
+        // SECURE: Prevent javascript: and other malicious URIs in images
+        let safeSrc = src || '';
+        if (safeSrc) {
+          const lowerSrc = safeSrc.trim().toLowerCase();
+          if (lowerSrc.startsWith('javascript:') || lowerSrc.startsWith('vbscript:') || lowerSrc.startsWith('data:text/html')) {
+            safeSrc = '';
+          }
+        }
+
+        return <img src={safeSrc} {...props} />;
+      },
+
       // Styled task list checkboxes
       input({ node, ...props }: any) {
         if (props.type === 'checkbox') {
