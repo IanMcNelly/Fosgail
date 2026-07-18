@@ -25,7 +25,6 @@ import { normalizePath, calculateWordCharCount, throttle } from './utils';
 import Sidebar from './components/Sidebar';
 import EditorArea from './components/EditorArea';
 import MarkdownOutput from './components/MarkdownOutput';
-import PreviewArea from './components/PreviewArea';
 import TabBar from './components/TabBar';
 import ThemeEditor from './components/ThemeEditor';
 import KeyboardShortcuts from './components/KeyboardShortcuts';
@@ -296,6 +295,22 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleGlobalShortcuts);
   }, [activeMarkdownFile, files, activeThemeId, isZenMode]);
 
+  const handleSelectFile = useCallback(async (id: string) => {
+    setActiveFileId(id);
+    setRecentlyViewedIds((prev) => [...new Set([id, ...prev])]);
+    const file = files.find(f => f.id === id);
+    if (file && !file.isLoaded && file.filePath) {
+      try {
+        const content = await readTextFile(file.filePath);
+        const counts = calculateWordCharCount(content);
+        setFiles(prev => prev.map(f => f.id === id ? { ...f, content, wordCount: counts.wordCount, charCount: counts.charCount, isLoaded: true } : f));
+      } catch (err: any) {
+        console.error(`Failed to load file content for ${file.name}:`, err);
+        alert(`Failed to load file: ${err.message || err}`);
+      }
+    }
+  }, [files, setFiles, setActiveFileId, setRecentlyViewedIds]);
+
   // Global mouse navigation (forward/back buttons)
   useEffect(() => {
     const handleMouseNav = (e: MouseEvent) => {
@@ -396,7 +411,7 @@ export default function App() {
       try {
         const confirm = await ask(`Are you sure you want to permanently delete the folder "${folderPath}" and all its contents? This cannot be undone.`, { title: 'Confirm Deletion', kind: 'warning' });
         if (!confirm) return;
-        await removeFile(normalizePath(`${workspacePath}/${folderPath}`), { recursive: true });
+        await remove(normalizePath(`${workspacePath}/${folderPath}`), { recursive: true });
       } catch (e) {
         console.error('Failed to remove folder on disk', e);
         alert(`Failed to delete folder: ${e}`);
@@ -505,7 +520,7 @@ export default function App() {
       const file = files.find(f => f.id === id);
       if (file && file.filePath) {
         try {
-          await removeFile(file.filePath);
+          await remove(file.filePath);
         } catch (e) {
           console.error("Failed to delete from disk", e);
         }
@@ -521,22 +536,6 @@ export default function App() {
       setActiveFileId(remaining.length > 0 ? remaining[0] : null);
     }
   };
-
-  const handleSelectFile = useCallback(async (id: string) => {
-    setActiveFileId(id);
-    setRecentlyViewedIds((prev) => [...new Set([id, ...prev])]);
-    const file = files.find(f => f.id === id);
-    if (file && !file.isLoaded && file.filePath) {
-      try {
-        const content = await readTextFile(file.filePath);
-        const counts = calculateWordCharCount(content);
-        setFiles(prev => prev.map(f => f.id === id ? { ...f, content, wordCount: counts.wordCount, charCount: counts.charCount, isLoaded: true } : f));
-      } catch (err: any) {
-        console.error(`Failed to load file content for ${file.name}:`, err);
-        alert(`Failed to load file: ${err.message || err}`);
-      }
-    }
-  }, [files, setFiles, setActiveFileId, setRecentlyViewedIds]);
 
   // Internal link navigation
   const handleNavigate = useCallback((href: string) => {
