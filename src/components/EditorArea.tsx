@@ -7,7 +7,7 @@ import { useRef, useEffect, useState, useMemo } from 'react';
 import { 
   Bold, Italic, Link, List, CheckSquare, 
   Code, Table, Heading1, ZoomIn, ZoomOut, Save,
-  ChevronRight
+  ChevronRight, Search, X, ArrowDown, ArrowUp
 } from 'lucide-react';
 
 interface EditorAreaProps {
@@ -63,7 +63,46 @@ export default function EditorArea({
 }: EditorAreaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const isSyncingRef = useRef(false);
+
+  // Global search shortcut
+  useEffect(() => {
+    const handleSearchShortcut = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        setShowSearch(true);
+        setTimeout(() => document.getElementById('editor-search-input')?.focus(), 50);
+      }
+    };
+    document.addEventListener('keydown', handleSearchShortcut);
+    return () => document.removeEventListener('keydown', handleSearchShortcut);
+  }, []);
+
+  const handleFindNext = (direction: 'next' | 'prev' = 'next') => {
+    if (!textareaRef.current || !searchQuery) return;
+    const text = textareaRef.current.value;
+    const lowerText = text.toLowerCase();
+    const lowerQuery = searchQuery.toLowerCase();
+    
+    const currentPos = direction === 'next' ? textareaRef.current.selectionEnd : textareaRef.current.selectionStart - 1;
+    let nextIndex = -1;
+
+    if (direction === 'next') {
+      nextIndex = lowerText.indexOf(lowerQuery, currentPos);
+      if (nextIndex === -1) nextIndex = lowerText.indexOf(lowerQuery, 0); // loop
+    } else {
+      nextIndex = lowerText.lastIndexOf(lowerQuery, currentPos);
+      if (nextIndex === -1) nextIndex = lowerText.lastIndexOf(lowerQuery, lowerText.length); // loop
+    }
+    
+    if (nextIndex !== -1) {
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(nextIndex, nextIndex + searchQuery.length);
+    }
+  };
 
   const [localFileName, setLocalFileName] = useState(fileName);
 
@@ -215,7 +254,15 @@ export default function EditorArea({
       return;
     }
 
-    // Auto close delimiters: brackets, asterisks, etc.
+      // If escape is pressed and search is open, close it
+      if (e.key === 'Escape' && showSearch) {
+        e.preventDefault();
+        setShowSearch(false);
+        textarea.focus();
+        return;
+      }
+
+      // Auto close delimiters: brackets, asterisks, etc.
     const pairs: Record<string, string> = {
       '[': ']',
       '{': '}',
@@ -475,6 +522,42 @@ export default function EditorArea({
           style={{ fontSize: `${fontSize}px`, lineHeight: '1.6em', fontFamily: 'var(--font-mono)' }}
           placeholder="Start typing markdown syntax here..."
         />
+
+        {/* Find Panel Floating */}
+        {showSearch && (
+          <div className={`absolute top-4 right-8 z-10 flex items-center gap-2 p-1.5 rounded-lg shadow-lg border ${themeInfo.isDark ? 'bg-[#18181b] border-white/10 text-white' : 'bg-white border-neutral-200 text-neutral-800'}`}>
+            <Search size={14} className="ml-1 text-neutral-400" />
+            <input
+              id="editor-search-input"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleFindNext(e.shiftKey ? 'prev' : 'next');
+                if (e.key === 'Escape') {
+                  setShowSearch(false);
+                  textareaRef.current?.focus();
+                }
+              }}
+              placeholder="Find in file..."
+              className="bg-transparent border-none outline-none text-[11px] w-40 focus:ring-0"
+            />
+            <div className="flex items-center border-l border-neutral-200 dark:border-white/10 pl-1">
+              <button onClick={() => handleFindNext('prev')} className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer text-neutral-400">
+                <ArrowUp size={14} />
+              </button>
+              <button onClick={() => handleFindNext('next')} className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer text-neutral-400">
+                <ArrowDown size={14} />
+              </button>
+              <button onClick={() => {
+                setShowSearch(false);
+                textareaRef.current?.focus();
+              }} className="p-1 rounded hover:bg-rose-500/10 hover:text-rose-500 cursor-pointer text-neutral-400 ml-1">
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

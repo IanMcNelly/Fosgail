@@ -25,6 +25,7 @@ import { normalizePath, calculateWordCharCount, throttle } from './utils';
 import Sidebar from './components/Sidebar';
 import EditorArea from './components/EditorArea';
 import MarkdownOutput from './components/MarkdownOutput';
+import TabBar from './components/TabBar';
 import ThemeEditor from './components/ThemeEditor';
 import KeyboardShortcuts from './components/KeyboardShortcuts';
 import SettingsModal from './components/SettingsModal';
@@ -47,7 +48,7 @@ export default function App() {
     wordWrap, setWordWrap,
     editorMode, setEditorMode,
     activeModal, setActiveModal,
-    recentlyViewedIds,
+    recentlyViewedIds, setRecentlyViewedIds,
     folders, setFolders,
     workspacePath, setWorkspacePath,
     isSyncScrollEnabled, setIsSyncScrollEnabled,
@@ -294,6 +295,38 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleGlobalShortcuts);
   }, [activeMarkdownFile, files, activeThemeId, isZenMode]);
 
+  const handleSelectFile = useCallback(async (id: string) => {
+    setActiveFileId(id);
+    setRecentlyViewedIds((prev) => [...new Set([id, ...prev])]);
+    const file = files.find(f => f.id === id);
+    if (file && !file.isLoaded && file.filePath) {
+      try {
+        const content = await readTextFile(file.filePath);
+        const counts = calculateWordCharCount(content);
+        setFiles(prev => prev.map(f => f.id === id ? { ...f, content, wordCount: counts.wordCount, charCount: counts.charCount, isLoaded: true } : f));
+      } catch (err: any) {
+        console.error(`Failed to load file content for ${file.name}:`, err);
+        alert(`Failed to load file: ${err.message || err}`);
+      }
+    }
+  }, [files, setFiles, setActiveFileId, setRecentlyViewedIds]);
+
+  // Global mouse navigation (forward/back buttons)
+  useEffect(() => {
+    const handleMouseNav = (e: MouseEvent) => {
+      // button 3 is Back, button 4 is Forward
+      if (e.button === 3 || e.button === 4) {
+        e.preventDefault();
+        const currentIds = useAppStore.getState().recentlyViewedIds;
+        if (currentIds.length > 1) {
+          handleSelectFile(currentIds[1]);
+        }
+      }
+    };
+    window.addEventListener('mouseup', handleMouseNav);
+    return () => window.removeEventListener('mouseup', handleMouseNav);
+  }, [handleSelectFile]);
+
   // Helper toggle dark to light themes
   const toggleThemeBrightnesses = () => {
     if (activeTheme.isDark) {
@@ -341,6 +374,7 @@ export default function App() {
     };
     setFiles((prev) => [newFile, ...prev]);
     setActiveFileId(newFile.id);
+    setRecentlyViewedIds((prev) => [newFile.id, ...prev]);
     setEditorMode('split');
   };
 
@@ -477,44 +511,31 @@ export default function App() {
 
   // Delete a file from local collections and disk
   const handleDeleteFile = async (id: string) => {
-    const currentFiles = useAppStore.getState().files;
-    const fileToDelete = currentFiles.find(f => f.id === id);
-    if (!fileToDelete) return;
-
-    if (fileToDelete.filePath) {
-      try {
-        const confirm = await ask(`Are you sure you want to permanently delete "${fileToDelete.name}"? This cannot be undone.`, { title: 'Confirm Deletion', kind: 'warning' });
-        if (!confirm) return;
-        await remove(fileToDelete.filePath);
-      } catch (e) {
-        console.error('Failed to remove file on disk', e);
-        alert(`Failed to delete file: ${e}`);
-        return;
+    setFiles((prev) => prev.filter((f) => f.id !== id));
+    if (activeFileId === id) {
+      setActiveFileId(null);
+    }
+    setRecentlyViewedIds(prev => prev.filter(vid => vid !== id));
+    if (workspacePath) {
+      const file = files.find(f => f.id === id);
+      if (file && file.filePath) {
+        try {
+          await remove(file.filePath);
+        } catch (e) {
+          console.error("Failed to delete from disk", e);
+        }
       }
     }
-
-    setFiles((prev) => {
-      const filtered = prev.filter((f) => f.id !== id);
-      if (activeFileId === id) {
-        setActiveFileId(filtered.length > 0 ? filtered[0].id : null);
-      }
-      return filtered;
-    });
   };
-  const handleSelectFile = useCallback(async (id: string) => {
-    setActiveFileId(id);
-    const file = files.find(f => f.id === id);
-    if (file && !file.isLoaded && file.filePath) {
-      try {
-        const content = await readTextFile(file.filePath);
-        const counts = calculateWordCharCount(content);
-        setFiles(prev => prev.map(f => f.id === id ? { ...f, content, wordCount: counts.wordCount, charCount: counts.charCount, isLoaded: true } : f));
-      } catch (err: any) {
-        console.error(`Failed to load file content for ${file.name}:`, err);
-        alert(`Failed to load file: ${err.message || err}`);
-      }
+
+  const handleCloseTab = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRecentlyViewedIds(prev => prev.filter(vid => vid !== id));
+    if (activeFileId === id) {
+      const remaining = recentlyViewedIds.filter(vid => vid !== id);
+      setActiveFileId(remaining.length > 0 ? remaining[0] : null);
     }
-  }, [files, setFiles, setActiveFileId]);
+  };
 
   // Internal link navigation
   const handleNavigate = useCallback((href: string) => {
@@ -672,9 +693,11 @@ export default function App() {
         if (newFiles.length > 0) {
           setFiles(newFiles);
           setActiveFileId(newFiles[0].id);
+          setRecentlyViewedIds([newFiles[0].id]);
         } else {
           setFiles([]);
           setActiveFileId(null);
+          setRecentlyViewedIds([]);
         }
         setFolders(Array.from(newFolders));
         setScanErrors(errors);
@@ -682,6 +705,76 @@ export default function App() {
       }
     } catch (e) {
       console.error('Workspace open failed:', e);
+    }
+  };
+
+  const handleRefreshWorkspace = async () => {
+    if (!workspacePath) return;
+    
+    const dirtyFiles = useAppStore.getState().files.filter(f => f.isDirty);
+    if (dirtyFiles.length > 0) {
+      const confirm = await ask(`You have ${dirtyFiles.length} unsaved draft(s). Refreshing will discard unsaved changes. Do you want to continue?`, { title: 'Unsaved Changes', kind: 'warning' });
+      if (!confirm) return;
+    }
+
+    try {
+      const newFiles: MarkdownFile[] = [];
+      const newFolders: Set<string> = new Set();
+      const errors: string[] = [];
+      
+      const scanDirectory = async (dirPath: string, relativePath: string) => {
+        try {
+          const entries = await readDir(dirPath);
+          for (const entry of entries) {
+            if (entry.name && (entry.name === '.git' || entry.name === 'node_modules' || entry.name.startsWith('.'))) {
+              continue;
+            }
+            if (entry.isDirectory) {
+              const newRelPath = relativePath ? `${relativePath}/${entry.name}` : entry.name!;
+              newFolders.add(newRelPath);
+              await scanDirectory(normalizePath(`${dirPath}/${entry.name}`), newRelPath);
+            } else if (entry.name && (entry.name.toLowerCase().endsWith('.md') || entry.name.toLowerCase().endsWith('.txt') || entry.name.toLowerCase().endsWith('.mdx') || entry.name.toLowerCase().endsWith('.markdown'))) {
+              const absoluteFilePath = normalizePath(`${dirPath}/${entry.name}`);
+              newFiles.push({
+                id: `file-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+                name: entry.name,
+                content: '',
+                wordCount: 0,
+                charCount: 0,
+                updatedAt: Date.now(),
+                folder: relativePath,
+                filePath: absoluteFilePath,
+                isDirty: false,
+                isLoaded: false,
+              });
+            }
+          }
+        } catch (err: any) {
+          errors.push(`Dir error (${dirPath}): ${err.message || err}`);
+          console.error('Failed to read dir', err);
+        }
+      };
+
+      await scanDirectory(workspacePath, '');
+
+      if (newFiles.length > 0) {
+        setFiles(newFiles);
+        // Keep active file if it still exists
+        const currentActive = useAppStore.getState().activeFileId;
+        const oldFiles = useAppStore.getState().files;
+        const oldActiveFile = oldFiles.find(f => f.id === currentActive);
+        
+        const stillExists = oldActiveFile ? newFiles.find(f => f.name === oldActiveFile.name && f.folder === oldActiveFile.folder) : null;
+        if (stillExists) setActiveFileId(stillExists.id);
+        else setActiveFileId(newFiles[0].id);
+      } else {
+        setFiles([]);
+        setActiveFileId(null);
+      }
+      setFolders(Array.from(newFolders));
+      setScanErrors(errors);
+    } catch (e) {
+      console.error('Workspace refresh failed:', e);
     }
   };
 
@@ -946,14 +1039,29 @@ export default function App() {
                 onImportFile={handleOpenWorkspace}
                 themeInfo={themeInfo}
                 scanErrors={scanErrors}
+                onRefreshWorkspace={handleRefreshWorkspace}
               />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Editor + Preview Pane */}
-        <div className={`flex-1 flex divide-x ${themeInfo.isDark ? 'divide-white/5' : 'divide-neutral-200'} min-w-0 overflow-hidden relative`}>
-          {activeMarkdownFile ? (
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Tab Bar */}
+          {!isZenMode && (
+            <TabBar
+              files={files}
+              recentlyViewedIds={recentlyViewedIds}
+              activeFileId={activeFileId}
+              onSelectFile={handleSelectFile}
+              onCloseTab={handleCloseTab}
+              themeInfo={themeInfo}
+            />
+          )}
+
+          {/* Editor + Preview Pane */}
+          <div className={`flex-1 flex divide-x ${themeInfo.isDark ? 'divide-white/5' : 'divide-neutral-200'} min-w-0 overflow-hidden relative`}>
+            {activeMarkdownFile ? (
             <>
               {/* Write Mode */}
               {(editorMode === 'edit' || editorMode === 'split') && (
@@ -1002,7 +1110,7 @@ export default function App() {
                 </div>
               )}
             </>
-          ) : (
+            ) : (
             /* Empty State */
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8 select-none">
               <motion.div
@@ -1050,6 +1158,7 @@ export default function App() {
               </motion.div>
             </div>
           )}
+          </div>
         </div>
       </div>
 
