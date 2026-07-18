@@ -15,6 +15,9 @@
 ## 2024-05-15 - Prevent unnecessary DOM remounts in ReactMarkdown
 **Learning:** Using inline functions or external dependencies (like `onNavigate`) inside a `useMemo` that generates custom components for a rich text renderer (like `react-markdown`) causes the components object to change reference on every keystroke. This causes React to completely unmount and remount every DOM node inside the preview on every keystroke, leading to huge layout thrashing and poor performance.
 **Action:** Always decouple state changes from render components creation. Use a `useRef` to store the latest external state/functions (like `onNavigate`), and remove them from the `useMemo` dependency array to keep the `components` map reference stable throughout the component lifecycle.
+## 2025-03-09 - Defer expensive Markdown rendering to prevent input stutter
+**Learning:** During rapid typing in the editor, parsing and rendering the large Markdown component synchronously on every keystroke blocks the main thread, causing significant input stutter and lag, especially for larger documents.
+**Action:** Use `React.useDeferredValue(content)` before passing it to the heavy `MemoizedMarkdown` component. This defers the expensive render to a background transition, keeping the main thread responsive for rapid keystrokes in the editor while allowing the preview to catch up smoothly.
 ## 2025-03-09 - Remove state updates inside useMemo (FileTree Search)
 
 **Learning:** In React, calling a state setter function (like `setExpandedFolders`) directly inside a `useMemo` block or during the render phase causes cascading synchronous re-renders. In `FileTree.tsx`, updating folder expansion state during the tree construction logic caused significant performance degradation when typing in the search bar, because every keystroke triggered multiple synchronous re-renders.
