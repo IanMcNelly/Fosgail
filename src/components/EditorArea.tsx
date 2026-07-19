@@ -159,8 +159,8 @@ export default function EditorArea({
     return count;
   }, [value]);
 
-  const lineNumbers = useMemo(() => {
-    return Array.from({ length: Math.max(lineCount, 1) }, (_, i) => i + 1);
+  const lineNumbersText = useMemo(() => {
+    return Array.from({ length: Math.max(lineCount, 1) }, (_, i) => i + 1).join('\n');
   }, [lineCount]);
 
   // Helper formatting injectors
@@ -496,14 +496,10 @@ export default function EditorArea({
         {!wordWrap && (
           <div
             ref={lineNumbersRef}
-            className={`w-12 text-right pr-3 py-6 md:py-8 select-none overflow-hidden font-mono text-xs leading-normal ${themeInfo.gutterBg}`}
-            style={{ fontSize: `${fontSize}px` }}
+            className={`w-12 text-right pr-3 py-6 md:py-8 select-none overflow-hidden font-mono text-xs whitespace-pre ${themeInfo.gutterBg}`}
+            style={{ fontSize: `${fontSize}px`, lineHeight: '1.5em' }}
           >
-            {lineNumbers.map((lineNum) => (
-              <div key={lineNum} className="h-[1.5em] leading-[1.5em]">
-                {lineNum}
-              </div>
-            ))}
+            {lineNumbersText}
           </div>
         )}
 
@@ -519,7 +515,7 @@ export default function EditorArea({
           className={`flex-1 h-full px-6 py-6 md:px-10 md:py-8 bg-transparent border-0 outline-none focus:ring-0 font-mono leading-normal resize-none overflow-y-auto ${
             wordWrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre overflow-x-auto'
           } ${themeInfo.isDark ? 'text-neutral-200' : 'text-neutral-800'}`}
-          style={{ fontSize: `${fontSize}px`, lineHeight: '1.6em', fontFamily: 'var(--font-mono)' }}
+          style={{ fontSize: `${fontSize}px`, lineHeight: '1.5em', fontFamily: 'var(--font-mono)' }}
           placeholder="Start typing markdown syntax here..."
         />
 
