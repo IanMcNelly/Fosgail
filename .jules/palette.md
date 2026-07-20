@@ -17,3 +17,6 @@
 ## 2024-11-20 - Dynamic ARIA labels for tabs
 **Learning:** Icon-only close buttons in tabbed interfaces are often overlooked for accessibility because the surrounding tab text provides visual context, but screen readers require specific accessible names for these buttons to differentiate them from one another.
 **Action:** When creating or updating tabbed navigation elements with dismissable tabs, ensure that the close buttons have dynamic `aria-label` attributes (e.g., `"Close tab ${fileName}"`) to make them contextually meaningful.
+## 2024-07-23 - Adding ARIA labels to transient icon-only buttons
+**Learning:** Transient UI elements like floating search overlays, inline toolbars, and dynamic layout controls (e.g. tabs) are frequently implemented quickly without semantic accessibility compared to static structural UI. These frequently use icon-only buttons without `aria-label` or `title` properties.
+**Action:** When working on new dynamic, absolute positioned panels or tabs, deliberately verify that all icon-only buttons have descriptive `aria-label`s and `title` attributes for sighted users needing tooltips.
