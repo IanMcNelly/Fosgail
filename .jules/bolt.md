@@ -25,3 +25,6 @@
 ## 2024-07-14 - Replace Array Split with Global Regex Match for Text Parsing
 **Learning:** For extremely large text strings (like whole Markdown documents), using `.split('\n')` to process line-by-line creates a massive intermediate array. This causes intense memory allocations and garbage collection overhead.
 **Action:** Use a global, multiline regular expression with `regex.exec(content)` in a while loop to scan text. It is drastically faster (~10x) and much more memory efficient since it processes the string directly without allocating new arrays.
+## 2025-07-20 - Prevent rendering thousands of React Nodes for line numbers
+**Learning:** In text editors, mapping an array of line numbers to create thousands of `<div>` tags causes immense reconciliation overhead on every keystroke, resulting in a large number of React node allocations and DOM updates.
+**Action:** Always prefer rendering a single string joined with `\n` in a `white-space: pre` block. This reduces thousands of `<div>` nodes to a single text node, vastly increasing typing performance.
