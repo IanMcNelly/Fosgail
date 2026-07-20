@@ -13,3 +13,7 @@
 ## 2024-03-24 - Adding ARIA labels to structural panel buttons
 **Learning:** Buttons within structural panels (like a Sidebar footer) that rely on a combination of icon and text for visual users can still benefit from explicit `aria-label` attributes to ensure screen readers announce their purpose clearly, especially when the text content contains ampersands or could be ambiguous.
 **Action:** When updating structural UI components, ensure that buttons opening modals or settings panels have explicit `aria-label` attributes for better accessibility.
+
+## 2024-07-23 - Adding ARIA labels to transient icon-only buttons
+**Learning:** Transient UI elements like floating search overlays, inline toolbars, and dynamic layout controls (e.g. tabs) are frequently implemented quickly without semantic accessibility compared to static structural UI. These frequently use icon-only buttons without `aria-label` or `title` properties.
+**Action:** When working on new dynamic, absolute positioned panels or tabs, deliberately verify that all icon-only buttons have descriptive `aria-label`s and `title` attributes for sighted users needing tooltips.

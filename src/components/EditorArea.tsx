@@ -543,16 +543,16 @@ export default function EditorArea({
               className="bg-transparent border-none outline-none text-[11px] w-40 focus:ring-0"
             />
             <div className="flex items-center border-l border-neutral-200 dark:border-white/10 pl-1">
-              <button onClick={() => handleFindNext('prev')} className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer text-neutral-400">
+              <button onClick={() => handleFindNext('prev')} aria-label="Previous match" title="Previous match" className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer text-neutral-400">
                 <ArrowUp size={14} />
               </button>
-              <button onClick={() => handleFindNext('next')} className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer text-neutral-400">
+              <button onClick={() => handleFindNext('next')} aria-label="Next match" title="Next match" className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer text-neutral-400">
                 <ArrowDown size={14} />
               </button>
               <button onClick={() => {
                 setShowSearch(false);
                 textareaRef.current?.focus();
-              }} className="p-1 rounded hover:bg-rose-500/10 hover:text-rose-500 cursor-pointer text-neutral-400 ml-1">
+              }} aria-label="Close search" title="Close search" className="p-1 rounded hover:bg-rose-500/10 hover:text-rose-500 cursor-pointer text-neutral-400 ml-1">
                 <X size={14} />
               </button>
             </div>
