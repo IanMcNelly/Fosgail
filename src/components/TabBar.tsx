@@ -81,6 +81,7 @@ export default function TabBar({
               className={`p-0.5 rounded transition-opacity ${
                 isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
               } hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 shrink-0`}
+              aria-label={`Close tab ${file.name}`}
             >
               <X size={10} />
             </button>

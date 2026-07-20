@@ -13,3 +13,7 @@
 ## 2024-03-24 - Adding ARIA labels to structural panel buttons
 **Learning:** Buttons within structural panels (like a Sidebar footer) that rely on a combination of icon and text for visual users can still benefit from explicit `aria-label` attributes to ensure screen readers announce their purpose clearly, especially when the text content contains ampersands or could be ambiguous.
 **Action:** When updating structural UI components, ensure that buttons opening modals or settings panels have explicit `aria-label` attributes for better accessibility.
+
+## 2024-11-20 - Dynamic ARIA labels for tabs
+**Learning:** Icon-only close buttons in tabbed interfaces are often overlooked for accessibility because the surrounding tab text provides visual context, but screen readers require specific accessible names for these buttons to differentiate them from one another.
+**Action:** When creating or updating tabbed navigation elements with dismissable tabs, ensure that the close buttons have dynamic `aria-label` attributes (e.g., `"Close tab ${fileName}"`) to make them contextually meaningful.
