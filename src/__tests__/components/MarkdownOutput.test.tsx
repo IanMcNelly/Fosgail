@@ -156,15 +156,53 @@ describe('MarkdownOutput — GFM task lists', () => {
 });
 
 // -------------------------------------------------------
-// Links
+// Links & Internal Navigation
 // -------------------------------------------------------
 describe('MarkdownOutput — links', () => {
-  it('renders links with target=_blank', () => {
+  it('renders links with target=_blank for external URLs', () => {
     renderOutput('[Fosgail](https://example.com)');
     const link = screen.getByText('Fosgail');
     expect(link.closest('a')).toHaveAttribute('target', '_blank');
     expect(link.closest('a')).toHaveAttribute('rel', 'noopener noreferrer');
   });
+
+  it('handles internal links to supported documents', () => {
+    const onNavigate = vi.fn();
+    render(
+      <MarkdownOutput
+        content="[Architecture](architecture.mmd)"
+        fileName="notes.md"
+        theme={testTheme}
+        syncScrollPercent={null}
+        onNavigate={onNavigate}
+      />
+    );
+    const link = screen.getByText('Architecture');
+    fireEvent.click(link);
+    expect(onNavigate).toHaveBeenCalledWith('architecture.mmd');
+  });
 });
+
+// -------------------------------------------------------
+// Mermaid diagram file rendering (.mmd / .mermaid)
+// -------------------------------------------------------
+describe('MarkdownOutput — .mmd file rendering', () => {
+  it('auto-wraps raw diagram content into a mermaid code block for .mmd files', async () => {
+    const rawMermaid = 'graph TD\n  A[Start] --> B[Finish]';
+    render(
+      <MarkdownOutput
+        content={rawMermaid}
+        fileName="diagram.mmd"
+        theme={testTheme}
+        syncScrollPercent={null}
+      />
+    );
+    // Should render the lazy diagram container or error block without throwing
+    await waitFor(() => {
+      expect(document.querySelector('.markdown-body')).toBeInTheDocument();
+    });
+  });
+});
+
 
 

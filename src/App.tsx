@@ -21,7 +21,7 @@ import { MarkdownFile, CSSTheme } from './types';
 import { BUILTIN_THEMES, GENERAL_THEMES_INFO } from './themes';
 import { INITIAL_FILES } from './samples';
 import { useAppStore } from './store/useAppStore';
-import { normalizePath, calculateWordCharCount, throttle, navigateHistory, pushToHistory } from './utils';
+import { normalizePath, calculateWordCharCount, throttle, navigateHistory, pushToHistory, isSupportedFile, SUPPORTED_EXTENSIONS } from './utils';
 import Sidebar from './components/Sidebar';
 import EditorArea from './components/EditorArea';
 import MarkdownOutput from './components/MarkdownOutput';
@@ -507,7 +507,12 @@ export default function App() {
       // Save-As dialog for drafts without a disk path
       try {
         const filePath = await save({
-          filters: [{ name: 'Markdown', extensions: ['md'] }],
+          filters: [
+            { name: 'All Supported Documents', extensions: [...SUPPORTED_EXTENSIONS] },
+            { name: 'Markdown Documents', extensions: ['md', 'markdown', 'mdx'] },
+            { name: 'Mermaid Diagrams', extensions: ['mmd', 'mermaid'] },
+            { name: 'Text Documents', extensions: ['txt', 'text', 'rst', 'adoc', 'asciidoc', 'org', 'log', 'csv', 'tsv'] },
+          ],
           defaultPath: activeMarkdownFile.name
         });
         if (filePath) {
@@ -688,7 +693,7 @@ export default function App() {
                   const newRelPath = relativePath ? `${relativePath}/${entry.name}` : entry.name!;
                   newFolders.add(newRelPath);
                   await scanDirectory(normalizePath(`${dirPath}/${entry.name}`), newRelPath);
-                } else if (entry.name && (entry.name.toLowerCase().endsWith('.md') || entry.name.toLowerCase().endsWith('.txt') || entry.name.toLowerCase().endsWith('.mdx') || entry.name.toLowerCase().endsWith('.markdown'))) {
+                } else if (entry.name && isSupportedFile(entry.name)) {
                   const absoluteFilePath = normalizePath(`${dirPath}/${entry.name}`);
                   newFiles.push({
                     id: `file-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
@@ -755,7 +760,7 @@ export default function App() {
               const newRelPath = relativePath ? `${relativePath}/${entry.name}` : entry.name!;
               newFolders.add(newRelPath);
               await scanDirectory(normalizePath(`${dirPath}/${entry.name}`), newRelPath);
-            } else if (entry.name && (entry.name.toLowerCase().endsWith('.md') || entry.name.toLowerCase().endsWith('.txt') || entry.name.toLowerCase().endsWith('.mdx') || entry.name.toLowerCase().endsWith('.markdown'))) {
+            } else if (entry.name && isSupportedFile(entry.name)) {
               const absoluteFilePath = normalizePath(`${dirPath}/${entry.name}`);
               newFiles.push({
                 id: `file-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
@@ -901,7 +906,7 @@ export default function App() {
               Drop to Import
             </h1>
             <p className="text-sm text-accent max-w-sm text-center font-medium">
-              Release your .md or .txt file to open it instantly.
+              Release your .md, .mmd, or document file to open it instantly.
             </p>
           </motion.div>
         )}
@@ -1114,6 +1119,7 @@ export default function App() {
                 <div className={`flex-1 min-w-[300px] h-full flex flex-col overflow-hidden relative ${themeInfo.isDark ? 'bg-[#111113]' : 'bg-white'}`}>
                   <MarkdownOutput
                     content={activeMarkdownFile.content}
+                    fileName={activeMarkdownFile.name}
                     theme={activeTheme}
                     syncScrollPercent={isSyncScrollEnabled && editorMode === 'split' ? syncScrollPercent : null}
                     onSyncScroll={isSyncScrollEnabled && editorMode === 'split' ? handleSyncScroll : undefined}

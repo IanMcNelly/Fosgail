@@ -115,7 +115,7 @@ export default function KeyboardShortcuts() {
       <div className="mt-5 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900/30 border border-neutral-200/50 dark:border-neutral-800/50 flex gap-2">
         <HelpCircle size={16} className="text-emerald-500 shrink-0 mt-0.5" />
         <span className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-normal">
-          <strong>Tip:</strong> If dragging-and-dropping file plans, you can drop any <code className="text-neutral-800 dark:text-neutral-200 bg-neutral-200 dark:bg-neutral-800 px-0.5 rounded">.md</code>, <code className="text-neutral-800 dark:text-neutral-200 bg-neutral-200 dark:bg-neutral-800 px-0.5 rounded">.txt</code>, or <code className="text-neutral-800 dark:text-neutral-200 bg-neutral-200 dark:bg-neutral-800 px-0.5 rounded">.json</code> block directly over any target area of this screen to instantly inspect its compiled formatting!
+          <strong>Tip:</strong> If dragging-and-dropping file plans, you can drop any <code className="text-neutral-800 dark:text-neutral-200 bg-neutral-200 dark:bg-neutral-800 px-0.5 rounded">.md</code>, <code className="text-neutral-800 dark:text-neutral-200 bg-neutral-200 dark:bg-neutral-800 px-0.5 rounded">.mmd</code>, or <code className="text-neutral-800 dark:text-neutral-200 bg-neutral-200 dark:bg-neutral-800 px-0.5 rounded">.txt</code> document directly over any target area of this screen to instantly inspect its compiled formatting!
         </span>
       </div>
     </div>

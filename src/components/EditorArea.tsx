@@ -9,6 +9,8 @@ import {
   Code, Table, Heading1, ZoomIn, ZoomOut, Save,
   ChevronRight, Search, X, ArrowDown, ArrowUp
 } from 'lucide-react';
+import { isSupportedFile } from '../utils';
+
 
 interface EditorAreaProps {
   value: string;
@@ -296,7 +298,7 @@ export default function EditorArea({
       setLocalFileName(fileName); // Revert if empty
       return;
     }
-    const hasValidExt = /\.(md|mdx|txt|markdown)$/i.test(trimmed);
+    const hasValidExt = isSupportedFile(trimmed);
     const finalName = hasValidExt ? trimmed : `${trimmed}.md`;
     if (finalName !== fileName) {
       // Delegate duplicate check to App.tsx — if rejected, the prop won't update

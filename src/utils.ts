@@ -7,6 +7,36 @@
 /** Normalize path separators to forward slashes (cross-platform) */
 export const normalizePath = (p: string) => p.replace(/\\/g, '/').replace(/\/+/g, '/');
 
+/** Non-code document and diagram file extensions supported by Fosgail */
+export const SUPPORTED_EXTENSIONS = [
+  'md', 'markdown', 'mdx',
+  'mmd', 'mermaid',
+  'txt', 'text',
+  'rst', 'adoc', 'asciidoc', 'org',
+  'log', 'csv', 'tsv'
+] as const;
+
+/** Extract file extension (lowercase, without leading dot) */
+export function getFileExtension(filename: string): string {
+  const clean = filename.trim();
+  const lastDot = clean.lastIndexOf('.');
+  if (lastDot <= 0 || lastDot === clean.length - 1) return '';
+  return clean.slice(lastDot + 1).toLowerCase();
+}
+
+/** Check if a file extension matches supported document/diagram types */
+export function isSupportedFile(filename: string): boolean {
+  const ext = getFileExtension(filename);
+  return SUPPORTED_EXTENSIONS.includes(ext as any);
+}
+
+/** Check if a file is a Mermaid diagram (.mmd or .mermaid) */
+export function isMermaidFile(filename: string): boolean {
+  const ext = getFileExtension(filename);
+  return ext === 'mmd' || ext === 'mermaid';
+}
+
+
 /** Slugify a heading text to produce a stable HTML id */
 export function slugify(text: string): string {
   return text

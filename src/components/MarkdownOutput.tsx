@@ -19,7 +19,7 @@ import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-markdown';
 
 import { CSSTheme } from '../types';
-import { slugify, simpleHash } from '../utils';
+import { slugify, simpleHash, isMermaidFile, isSupportedFile } from '../utils';
 
 // Lazy-load Mermaid renderer — zero cost unless a mermaid block exists
 const MermaidBlock = lazy(() => import('./MermaidBlock'));
@@ -33,6 +33,7 @@ const MemoizedMarkdown = React.memo(({ content, components }: { content: string,
 
 interface MarkdownOutputProps {
   content: string;
+  fileName?: string;
   theme: CSSTheme;
   /** When set, scroll the preview to this percentage (0–1). Null = uncontrolled. */
   syncScrollPercent: number | null;
@@ -64,7 +65,7 @@ const CopyButton = ({ value, blockId }: { value: string; blockId: string }) => {
   );
 };
 
-export default function MarkdownOutput({ content, theme, syncScrollPercent, onSyncScroll, onNavigate }: MarkdownOutputProps) {
+export default function MarkdownOutput({ content, fileName, theme, syncScrollPercent, onSyncScroll, onNavigate }: MarkdownOutputProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const isSyncingRef = useRef(false);
 
@@ -72,6 +73,18 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
   // to a background transition. This ensures that the main thread remains
   // responsive during rapid typing in the editor, preventing input stutter.
   const deferredContent = React.useDeferredValue(content);
+
+  // Auto-wrap raw Mermaid code in .mmd/.mermaid files into a ```mermaid block
+  const processedContent = useMemo(() => {
+    if (fileName && isMermaidFile(fileName)) {
+      const trimmed = deferredContent.trim();
+      if (trimmed && !trimmed.startsWith('```')) {
+        return `\`\`\`mermaid\n${deferredContent}\n\`\`\``;
+      }
+    }
+    return deferredContent;
+  }, [deferredContent, fileName]);
+
 
   // Detect mermaid usage — only import the library if needed
   const onNavigateRef = useRef(onNavigate);
@@ -208,7 +221,7 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
           }
         }
 
-        if (safeHref && !safeHref.startsWith('http') && safeHref.endsWith('.md')) {
+        if (safeHref && !safeHref.startsWith('http') && (isSupportedFile(safeHref) || safeHref.endsWith('.md'))) {
           return (
             <a
               href={safeHref}
@@ -270,7 +283,7 @@ export default function MarkdownOutput({ content, theme, syncScrollPercent, onSy
       className={`w-full h-full overflow-y-auto ${syncScrollPercent !== null ? 'hide-scrollbar' : ''}`}
     >
       <div className="markdown-body min-h-full w-full max-w-none px-6 py-6 md:px-12 md:py-10 transition-all duration-300">
-        <MemoizedMarkdown content={deferredContent} components={components} />
+        <MemoizedMarkdown content={processedContent} components={components} />
       </div>
     </div>
   );
