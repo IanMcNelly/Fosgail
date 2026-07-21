@@ -86,4 +86,19 @@ describe('TabBar component', () => {
     fireEvent.click(screen.getByText('test2.md'));
     expect(onSelectFileMock).toHaveBeenCalledWith('file-2');
   });
+
+  it('skips rendering tabs for IDs with no matching file (ghost IDs)', () => {
+    render(
+      <TabBar
+        files={[mockFiles[0]]}
+        recentlyViewedIds={['file-1', 'file-ghost']}
+        activeFileId="file-1"
+        onSelectFile={vi.fn()}
+        onCloseTab={vi.fn()}
+        themeInfo={themeInfo}
+      />
+    );
+    expect(screen.getByText('test1.md')).toBeInTheDocument();
+    expect(screen.queryByText('file-ghost')).not.toBeInTheDocument();
+  });
 });

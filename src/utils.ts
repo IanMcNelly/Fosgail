@@ -112,3 +112,42 @@ export function throttle<T extends (...args: any[]) => void>(func: T, limit: num
     }
   } as T;
 }
+
+/**
+ * Pure navigation history helper.
+ * Given history array and current index, moves back or forward.
+ */
+export function navigateHistory(
+  history: string[],
+  currentIndex: number,
+  direction: 'back' | 'forward'
+): { newIndex: number; targetId: string | null } {
+  if (history.length === 0) return { newIndex: -1, targetId: null };
+
+  if (direction === 'back') {
+    if (currentIndex > 0) {
+      const newIndex = currentIndex - 1;
+      return { newIndex, targetId: history[newIndex] };
+    }
+  } else if (direction === 'forward') {
+    if (currentIndex < history.length - 1) {
+      const newIndex = currentIndex + 1;
+      return { newIndex, targetId: history[newIndex] };
+    }
+  }
+  return { newIndex: currentIndex, targetId: null };
+}
+
+/**
+ * Pushes a new file ID into navigation history at the current pointer index,
+ * discarding any forward history stack.
+ */
+export function pushToHistory(history: string[], currentIndex: number, newFileId: string): { newHistory: string[]; newIndex: number } {
+  if (history[currentIndex] === newFileId) {
+    return { newHistory: history, newIndex: currentIndex };
+  }
+  const truncated = currentIndex >= 0 ? history.slice(0, currentIndex + 1) : [];
+  const updated = [...truncated, newFileId];
+  return { newHistory: updated, newIndex: updated.length - 1 };
+}
+

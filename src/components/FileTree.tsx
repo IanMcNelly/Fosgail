@@ -170,6 +170,19 @@ export default function FileTree({
       pruneEmpty(root);
     }
 
+    // 4. Pre-sort subfolders and files so render does not allocate and sort on every frame
+    const sortTree = (node: TreeNode) => {
+      node.files.sort((a, b) => a.name.localeCompare(b.name));
+      const sortedSubfolderKeys = Object.keys(node.subfolders).sort((a, b) => a.localeCompare(b));
+      const sortedSubfolders: Record<string, TreeNode> = {};
+      sortedSubfolderKeys.forEach((key) => {
+        sortTree(node.subfolders[key]);
+        sortedSubfolders[key] = node.subfolders[key];
+      });
+      node.subfolders = sortedSubfolders;
+    };
+    sortTree(root);
+
     return root;
   }, [files, folders, searchQuery]);
 
@@ -333,14 +346,10 @@ export default function FileTree({
         {isExpanded && hasChildren && (
           <div className="space-y-0.5">
             {/* 1. Recurse Subfolders */}
-            {Object.values(node.subfolders)
-              .sort((a: any, b: any) => a.name.localeCompare(b.name))
-              .map((subNode) => renderFolderNode(subNode, depth + 1))}
+            {Object.values(node.subfolders).map((subNode) => renderFolderNode(subNode, depth + 1))}
 
             {/* 2. List Files at this folder layer */}
-            {node.files
-              .sort((a: any, b: any) => a.name.localeCompare(b.name))
-              .map((file) => renderFileItem(file, depth + 1))}
+            {node.files.map((file) => renderFileItem(file, depth + 1))}
           </div>
         )}
       </div>
@@ -353,13 +362,11 @@ export default function FileTree({
     const isConfirmingDelete = confirmDeleteFileId === file.id;
 
     return (
-      <motion.div
+      <div
         key={file.id}
         id={`file-row-${file.id}`}
-        whileHover={{ scale: 1.01, originX: 0 }}
-        whileTap={{ scale: 0.99 }}
         onClick={() => onSelectFile(file.id)}
-        className={`group relative flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-all ${
+        className={`group relative flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] origin-left ${
           isActive
             ? themeInfo.activeFileBg
             : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100/50 dark:hover:bg-white/5'
@@ -426,7 +433,7 @@ export default function FileTree({
             <Trash2 size={11} fill="none" />
           </button>
         )}
-      </motion.div>
+      </div>
     );
   };
 

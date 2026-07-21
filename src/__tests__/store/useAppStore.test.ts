@@ -127,6 +127,27 @@ describe('useAppStore — active file & recently viewed', () => {
     act(() => { result.current.setActiveFileId(null); });
     expect(result.current.activeFileId).toBeNull();
   });
+
+  it('recentlyViewedIds does not retain IDs of files that no longer exist in state when filtered', () => {
+    const { result } = renderHook(() => useAppStore());
+    const file = makeFile({ id: 'doomed-file', folder: 'OldDocs' });
+
+    act(() => {
+      result.current.setFiles([file]);
+      result.current.setActiveFileId('doomed-file');
+    });
+    expect(result.current.recentlyViewedIds).toContain('doomed-file');
+
+    act(() => {
+      result.current.setFiles([]);
+    });
+    act(() => {
+      result.current.setRecentlyViewedIds(prev => prev.filter(id => 
+        result.current.files.some(f => f.id === id)
+      ));
+    });
+    expect(result.current.recentlyViewedIds).not.toContain('doomed-file');
+  });
 });
 
 // -------------------------------------------------------
