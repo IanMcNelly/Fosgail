@@ -6,6 +6,9 @@ import {
   calculateWordCharCount,
   parseHeadings,
   throttle,
+  getFileExtension,
+  isSupportedFile,
+  isMermaidFile,
 } from '../../utils';
 
 // -------------------------------------------------------
@@ -238,3 +241,50 @@ More text.
     expect(headings.some((h) => h.text === 'Real Heading')).toBe(true);
   });
 });
+
+describe('getFileExtension', () => {
+  it('extracts extension accurately in lowercase', () => {
+    expect(getFileExtension('diagram.MMD')).toBe('mmd');
+    expect(getFileExtension('notes.txt')).toBe('txt');
+    expect(getFileExtension('README.markdown')).toBe('markdown');
+    expect(getFileExtension('/path/to/chart.mermaid')).toBe('mermaid');
+  });
+
+  it('returns empty string for files without extensions or hidden files', () => {
+    expect(getFileExtension('LICENSE')).toBe('');
+    expect(getFileExtension('.gitignore')).toBe('');
+  });
+});
+
+describe('isSupportedFile', () => {
+  it('returns true for supported document and diagram file types', () => {
+    expect(isSupportedFile('document.md')).toBe(true);
+    expect(isSupportedFile('chart.mmd')).toBe(true);
+    expect(isSupportedFile('flow.mermaid')).toBe(true);
+    expect(isSupportedFile('notes.txt')).toBe(true);
+    expect(isSupportedFile('docs.rst')).toBe(true);
+    expect(isSupportedFile('guide.adoc')).toBe(true);
+    expect(isSupportedFile('data.csv')).toBe(true);
+  });
+
+  it('returns false for unsupported code files and binaries', () => {
+    expect(isSupportedFile('app.js')).toBe(false);
+    expect(isSupportedFile('main.py')).toBe(false);
+    expect(isSupportedFile('lib.rs')).toBe(false);
+    expect(isSupportedFile('image.png')).toBe(false);
+  });
+});
+
+describe('isMermaidFile', () => {
+  it('identifies .mmd and .mermaid files', () => {
+    expect(isMermaidFile('architecture.mmd')).toBe(true);
+    expect(isMermaidFile('sequence.mermaid')).toBe(true);
+    expect(isMermaidFile('FLOW.MMD')).toBe(true);
+  });
+
+  it('returns false for non-mermaid files', () => {
+    expect(isMermaidFile('document.md')).toBe(false);
+    expect(isMermaidFile('notes.txt')).toBe(false);
+  });
+});
+

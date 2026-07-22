@@ -7,6 +7,36 @@
 /** Normalize path separators to forward slashes (cross-platform) */
 export const normalizePath = (p: string) => p.replace(/\\/g, '/').replace(/\/+/g, '/');
 
+/** Non-code document and diagram file extensions supported by Fosgail */
+export const SUPPORTED_EXTENSIONS = [
+  'md', 'markdown', 'mdx',
+  'mmd', 'mermaid',
+  'txt', 'text',
+  'rst', 'adoc', 'asciidoc', 'org',
+  'log', 'csv', 'tsv'
+] as const;
+
+/** Extract file extension (lowercase, without leading dot) */
+export function getFileExtension(filename: string): string {
+  const clean = filename.trim();
+  const lastDot = clean.lastIndexOf('.');
+  if (lastDot <= 0 || lastDot === clean.length - 1) return '';
+  return clean.slice(lastDot + 1).toLowerCase();
+}
+
+/** Check if a file extension matches supported document/diagram types */
+export function isSupportedFile(filename: string): boolean {
+  const ext = getFileExtension(filename);
+  return SUPPORTED_EXTENSIONS.includes(ext as any);
+}
+
+/** Check if a file is a Mermaid diagram (.mmd or .mermaid) */
+export function isMermaidFile(filename: string): boolean {
+  const ext = getFileExtension(filename);
+  return ext === 'mmd' || ext === 'mermaid';
+}
+
+
 /** Slugify a heading text to produce a stable HTML id */
 export function slugify(text: string): string {
   return text
@@ -112,3 +142,42 @@ export function throttle<T extends (...args: any[]) => void>(func: T, limit: num
     }
   } as T;
 }
+
+/**
+ * Pure navigation history helper.
+ * Given history array and current index, moves back or forward.
+ */
+export function navigateHistory(
+  history: string[],
+  currentIndex: number,
+  direction: 'back' | 'forward'
+): { newIndex: number; targetId: string | null } {
+  if (history.length === 0) return { newIndex: -1, targetId: null };
+
+  if (direction === 'back') {
+    if (currentIndex > 0) {
+      const newIndex = currentIndex - 1;
+      return { newIndex, targetId: history[newIndex] };
+    }
+  } else if (direction === 'forward') {
+    if (currentIndex < history.length - 1) {
+      const newIndex = currentIndex + 1;
+      return { newIndex, targetId: history[newIndex] };
+    }
+  }
+  return { newIndex: currentIndex, targetId: null };
+}
+
+/**
+ * Pushes a new file ID into navigation history at the current pointer index,
+ * discarding any forward history stack.
+ */
+export function pushToHistory(history: string[], currentIndex: number, newFileId: string): { newHistory: string[]; newIndex: number } {
+  if (history[currentIndex] === newFileId) {
+    return { newHistory: history, newIndex: currentIndex };
+  }
+  const truncated = currentIndex >= 0 ? history.slice(0, currentIndex + 1) : [];
+  const updated = [...truncated, newFileId];
+  return { newHistory: updated, newIndex: updated.length - 1 };
+}
+

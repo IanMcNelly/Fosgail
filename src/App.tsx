@@ -21,7 +21,7 @@ import { MarkdownFile, CSSTheme } from './types';
 import { BUILTIN_THEMES, GENERAL_THEMES_INFO } from './themes';
 import { INITIAL_FILES } from './samples';
 import { useAppStore } from './store/useAppStore';
-import { normalizePath, calculateWordCharCount, throttle } from './utils';
+import { normalizePath, calculateWordCharCount, throttle, navigateHistory, pushToHistory, isSupportedFile, SUPPORTED_EXTENSIONS } from './utils';
 import Sidebar from './components/Sidebar';
 import EditorArea from './components/EditorArea';
 import MarkdownOutput from './components/MarkdownOutput';
@@ -60,6 +60,14 @@ export default function App() {
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   // Synchronized scroll percentage (0–1)
   const [syncScrollPercent, setSyncScrollPercent] = useState(0);
+
+  // Navigation stack & pointer for forward/back history
+  const [navHistory, setNavHistory] = useState<string[]>(activeFileId ? [activeFileId] : []);
+  const [navIndex, setNavIndex] = useState<number>(activeFileId ? 0 : -1);
+  const navHistoryRef = useRef(navHistory);
+  navHistoryRef.current = navHistory;
+  const navIndexRef = useRef(navIndex);
+  navIndexRef.current = navIndex;
 
   // ⚡ Bolt Optimization: Throttle the scroll sync state update to prevent the entire
   // app (Sidebar, Editor, Preview) from re-rendering synchronously on every scroll frame.
@@ -295,9 +303,13 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleGlobalShortcuts);
   }, [activeMarkdownFile, files, activeThemeId, isZenMode]);
 
-  const handleSelectFile = useCallback(async (id: string) => {
+  const handleSelectFile = useCallback(async (id: string, isNavigatingHistory = false) => {
     setActiveFileId(id);
-    setRecentlyViewedIds((prev) => [...new Set([id, ...prev])]);
+    if (!isNavigatingHistory) {
+      const { newHistory, newIndex } = pushToHistory(navHistoryRef.current, navIndexRef.current, id);
+      setNavHistory(newHistory);
+      setNavIndex(newIndex);
+    }
     const file = files.find(f => f.id === id);
     if (file && !file.isLoaded && file.filePath) {
       try {
@@ -309,17 +321,25 @@ export default function App() {
         alert(`Failed to load file: ${err.message || err}`);
       }
     }
-  }, [files, setFiles, setActiveFileId, setRecentlyViewedIds]);
+  }, [files, setFiles, setActiveFileId]);
 
   // Global mouse navigation (forward/back buttons)
   useEffect(() => {
     const handleMouseNav = (e: MouseEvent) => {
       // button 3 is Back, button 4 is Forward
-      if (e.button === 3 || e.button === 4) {
+      if (e.button === 3) {
         e.preventDefault();
-        const currentIds = useAppStore.getState().recentlyViewedIds;
-        if (currentIds.length > 1) {
-          handleSelectFile(currentIds[1]);
+        const { newIndex, targetId } = navigateHistory(navHistoryRef.current, navIndexRef.current, 'back');
+        if (targetId) {
+          setNavIndex(newIndex);
+          handleSelectFile(targetId, true);
+        }
+      } else if (e.button === 4) {
+        e.preventDefault();
+        const { newIndex, targetId } = navigateHistory(navHistoryRef.current, navIndexRef.current, 'forward');
+        if (targetId) {
+          setNavIndex(newIndex);
+          handleSelectFile(targetId, true);
         }
       }
     };
@@ -442,6 +462,7 @@ export default function App() {
 
     setFolders((prev) => prev.filter((f) => f !== folderPath && !f.startsWith(folderPath + '/')));
     setFiles(filtered);
+    setRecentlyViewedIds((prev) => prev.filter((id) => filtered.some((f) => f.id === id)));
     if (newActiveId !== currentActiveId) {
       setActiveFileId(newActiveId);
     }
@@ -486,7 +507,12 @@ export default function App() {
       // Save-As dialog for drafts without a disk path
       try {
         const filePath = await save({
-          filters: [{ name: 'Markdown', extensions: ['md'] }],
+          filters: [
+            { name: 'All Supported Documents', extensions: [...SUPPORTED_EXTENSIONS] },
+            { name: 'Markdown Documents', extensions: ['md', 'markdown', 'mdx'] },
+            { name: 'Mermaid Diagrams', extensions: ['mmd', 'mermaid'] },
+            { name: 'Text Documents', extensions: ['txt', 'text', 'rst', 'adoc', 'asciidoc', 'org', 'log', 'csv', 'tsv'] },
+          ],
           defaultPath: activeMarkdownFile.name
         });
         if (filePath) {
@@ -528,14 +554,15 @@ export default function App() {
     }
   };
 
-  const handleCloseTab = (id: string, e: React.MouseEvent) => {
+  const handleCloseTab = useCallback((id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setRecentlyViewedIds(prev => prev.filter(vid => vid !== id));
-    if (activeFileId === id) {
-      const remaining = recentlyViewedIds.filter(vid => vid !== id);
+    const currentRecentlyViewed = useAppStore.getState().recentlyViewedIds;
+    const remaining = currentRecentlyViewed.filter(vid => vid !== id);
+    setRecentlyViewedIds(remaining);
+    if (useAppStore.getState().activeFileId === id) {
       setActiveFileId(remaining.length > 0 ? remaining[0] : null);
     }
-  };
+  }, [setRecentlyViewedIds, setActiveFileId]);
 
   // Internal link navigation
   const handleNavigate = useCallback((href: string) => {
@@ -666,7 +693,7 @@ export default function App() {
                   const newRelPath = relativePath ? `${relativePath}/${entry.name}` : entry.name!;
                   newFolders.add(newRelPath);
                   await scanDirectory(normalizePath(`${dirPath}/${entry.name}`), newRelPath);
-                } else if (entry.name && (entry.name.toLowerCase().endsWith('.md') || entry.name.toLowerCase().endsWith('.txt') || entry.name.toLowerCase().endsWith('.mdx') || entry.name.toLowerCase().endsWith('.markdown'))) {
+                } else if (entry.name && isSupportedFile(entry.name)) {
                   const absoluteFilePath = normalizePath(`${dirPath}/${entry.name}`);
                   newFiles.push({
                     id: `file-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
@@ -733,7 +760,7 @@ export default function App() {
               const newRelPath = relativePath ? `${relativePath}/${entry.name}` : entry.name!;
               newFolders.add(newRelPath);
               await scanDirectory(normalizePath(`${dirPath}/${entry.name}`), newRelPath);
-            } else if (entry.name && (entry.name.toLowerCase().endsWith('.md') || entry.name.toLowerCase().endsWith('.txt') || entry.name.toLowerCase().endsWith('.mdx') || entry.name.toLowerCase().endsWith('.markdown'))) {
+            } else if (entry.name && isSupportedFile(entry.name)) {
               const absoluteFilePath = normalizePath(`${dirPath}/${entry.name}`);
               newFiles.push({
                 id: `file-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
@@ -879,7 +906,7 @@ export default function App() {
               Drop to Import
             </h1>
             <p className="text-sm text-accent max-w-sm text-center font-medium">
-              Release your .md or .txt file to open it instantly.
+              Release your .md, .mmd, or document file to open it instantly.
             </p>
           </motion.div>
         )}
@@ -1092,6 +1119,7 @@ export default function App() {
                 <div className={`flex-1 min-w-[300px] h-full flex flex-col overflow-hidden relative ${themeInfo.isDark ? 'bg-[#111113]' : 'bg-white'}`}>
                   <MarkdownOutput
                     content={activeMarkdownFile.content}
+                    fileName={activeMarkdownFile.name}
                     theme={activeTheme}
                     syncScrollPercent={isSyncScrollEnabled && editorMode === 'split' ? syncScrollPercent : null}
                     onSyncScroll={isSyncScrollEnabled && editorMode === 'split' ? handleSyncScroll : undefined}

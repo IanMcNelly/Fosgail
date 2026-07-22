@@ -9,6 +9,34 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.4.0] - Unreleased
+
+### Added
+- Support for additional file extensions including `.txt` and `.mmd` (Mermaid)
+
+### Fixed
+- App close failure, forward/back navigation regressions, and workspace loading regressions
+
+## [1.3.3] - 2026-07-21
+
+### Added
+- Tab-based navigation for managing multiple open files
+- Autosave functionality and dirty file indicators
+- File search and filtering directly inside the sidebar
+- Extensive unit testing for `TabBar`, navigation history, and utility functions
+
+### Fixed
+- **[Security]** Content Security Policy (CSP) implementation
+- **[Security]** XSS vulnerability in Markdown parsing, Mermaid rendering, and markdown links
+- **[Security]** Path traversal vulnerability in file and folder operations
+
+### Changed
+- **[A11y]** Added ARIA labels and titles across core UI controls (TabBar, OutlinePanel, FileTree, Settings toggles, Editor toolbar)
+- **[Performance]** Optimized `calculateWordCharCount` to O(n) for better performance
+- **[Performance]** Optimized scroll sync performance using throttle
+- **[Performance]** Optimized line counting rendering
+- **[Performance]** Prevented unnecessary DOM remounts in Markdown output and extracted `CopyButton` to prevent full re-renders
+
 ## [1.2.0] - 2026-06-28
 
 ### Added
@@ -74,7 +102,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Word count, character count, file size in status bar
 - Keyboard shortcuts modal
 
-[Unreleased]: https://github.com/IanMcNelly/markdown-viewer/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/IanMcNelly/markdown-viewer/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/IanMcNelly/markdown-viewer/compare/v1.3.3...v1.4.0
+[1.3.3]: https://github.com/IanMcNelly/markdown-viewer/compare/v1.2.0...v1.3.3
 [1.2.0]: https://github.com/IanMcNelly/markdown-viewer/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/IanMcNelly/markdown-viewer/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/IanMcNelly/markdown-viewer/compare/v0.1.0...v1.0.0
