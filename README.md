@@ -3,7 +3,7 @@
 > A lightweight, offline Markdown viewer and editor built with React + Tauri. A premium, bloat-free alternative to opening an IDE just to read a `.md` file.
 
 [![CI](https://github.com/IanMcNelly/fosgail/actions/workflows/ci.yml/badge.svg)](https://github.com/IanMcNelly/fosgail/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-106%20passing-brightgreen)](#testing)
+[![Tests](https://img.shields.io/badge/tests-135%20passing-brightgreen)](#testing)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
@@ -14,9 +14,12 @@
 - **Synchronized Scrolling** — the preview tracks your cursor position automatically
 - **Command Palette** — `Cmd+K` / `Ctrl+K` spotlight search across files and app commands
 - **Document Outline** — floating heading navigator, Typora-style (`Cmd+I`)
+- **Tabbed Navigation** — open and manage multiple files simultaneously
+- **File Search** — quickly filter and find files in your workspace
+- **Autosave** — automatic background saving prevents data loss
 - **Mermaid Diagrams** — lazy-loaded, zero cost unless your document uses them
 - **Export to PDF** — native OS print dialog (`Cmd+P`)
-- **Workspace Support** — open an entire folder of `.md` files
+- **Workspace Support** — open entire folders containing `.md`, `.txt`, and `.mmd` files
 - **Custom CSS Themes** — write your own markdown stylesheet live
 - **Zen Mode** — distraction-free fullscreen writing
 - **Offline** — zero network dependency, all data stays on disk
@@ -79,17 +82,20 @@ npm run desktop    # runs `tauri dev`
 ## Testing
 
 ```bash
-npm test              # run all 106 tests once
+npm test              # run all 135 tests once
 npm run test:watch    # interactive watch mode
 npm run test:coverage # generate coverage report (HTML + lcov)
 ```
 
 The test suite covers:
-- **31 utility unit tests** — `normalizePath`, `slugify`, `simpleHash`, `calculateWordCharCount`, `parseHeadings`
-- **21 Zustand store tests** — all state actions, recently-viewed tracking, feature flags
+- **40 utility unit tests** — `normalizePath`, `slugify`, `simpleHash`, `calculateWordCharCount`, `parseHeadings`
+- **26 Zustand store tests** — state actions, tauri storage persistence, recently-viewed tracking
 - **14 OutlinePanel tests** — heading extraction, empty state, theme classes, scroll
-- **18 MarkdownOutput tests** — rendering, heading IDs (regression), code blocks, task lists
+- **19 MarkdownOutput tests** — rendering, heading IDs, code blocks, task lists, XSS prevention
 - **22 CommandPalette tests** — file search, command mode, keyboard navigation (↑↓↵Esc)
+- **7 Navigation tests** — browser-style back/forward history tracking
+- **4 TabBar tests** — tab selection, closing, and dirty state indicators
+- **3 Capabilities tests** — Tauri capabilities JSON validation
 
 ---
 
