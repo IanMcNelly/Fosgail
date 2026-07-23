@@ -250,6 +250,7 @@ export default function FileTree({
                    setConfirmDeletePath(null);
                  }}
                  className="p-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white cursor-pointer"
+                 aria-label="Confirm delete folder"
                >
                  <Check size={9} />
                </button>
@@ -260,6 +261,7 @@ export default function FileTree({
                    setConfirmDeletePath(null);
                  }}
                  className="p-0.5 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-400 hover:text-neutral-200 cursor-pointer"
+                 aria-label="Cancel delete folder"
                >
                  <X size={9} />
                </button>
@@ -275,6 +277,7 @@ export default function FileTree({
                     onNewFile(node.fullPath);
                   }}
                   className="p-1 rounded text-neutral-400 hover:text-accent hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer"
+                  aria-label="New File in Folder"
                 >
                   <Plus size={11} />
                 </button>
@@ -288,6 +291,7 @@ export default function FileTree({
                     setNewFolderName('');
                   }}
                   className="p-1 rounded text-neutral-400 hover:text-accent hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer"
+                  aria-label="New Subfolder"
                 >
                   <FolderPlus size={11} />
                 </button>
@@ -300,6 +304,7 @@ export default function FileTree({
                     setConfirmDeleteFileId(null);
                   }}
                   className="p-1 rounded text-neutral-400 hover:text-rose-500 hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer"
+                  aria-label="Delete Folder"
                 >
                   <Trash2 size={11} />
                 </button>
