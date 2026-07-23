@@ -624,8 +624,10 @@ export default function App() {
   // Rename the active file (with duplicate check)
   const handleRenameActiveFile = async (newName: string) => {
     // SECURE: Prevent path traversal to rename files outside current directory
-    if (newName.includes('/') || newName.includes('\\') || newName.includes('..')) {
-      alert("Invalid file name.");
+    const safeName = newName.replace(/[\/\\]/g, '-').replace(/\.\./g, '').replace(/[?%*:|"<>]/g, '');
+
+    if (!safeName || safeName !== newName) {
+      alert("Invalid file name. Special characters are not allowed.");
       return;
     }
 
@@ -635,17 +637,17 @@ export default function App() {
 
     // Check for duplicates in the same folder
     const duplicate = files.find(
-      (f) => f.id !== activeFileId && f.folder === currentFile.folder && f.name === newName
+      (f) => f.id !== activeFileId && f.folder === currentFile.folder && f.name === safeName
     );
     if (duplicate) {
-      console.warn(`A file named "${newName}" already exists in this folder.`);
+      console.warn(`A file named "${safeName}" already exists in this folder.`);
       return; // Silently reject — EditorArea will reset to old name via prop
     }
 
     let newFilePath = currentFile.filePath;
     if (currentFile.filePath) {
       const folderPath = currentFile.filePath.substring(0, currentFile.filePath.lastIndexOf('/'));
-      newFilePath = `${folderPath}/${newName}`;
+      newFilePath = `${folderPath}/${safeName}`;
       try {
         await rename(currentFile.filePath, newFilePath);
       } catch (e) {
@@ -656,7 +658,7 @@ export default function App() {
     }
 
     setFiles((prev) =>
-      prev.map((f) => (f.id === activeFileId ? { ...f, name: newName, isDirty: true, filePath: newFilePath } : f))
+      prev.map((f) => (f.id === activeFileId ? { ...f, name: safeName, isDirty: true, filePath: newFilePath } : f))
     );
   };
 
