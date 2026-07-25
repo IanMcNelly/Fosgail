@@ -28,3 +28,6 @@
 ## 2025-07-20 - Prevent rendering thousands of React Nodes for line numbers
 **Learning:** In text editors, mapping an array of line numbers to create thousands of `<div>` tags causes immense reconciliation overhead on every keystroke, resulting in a large number of React node allocations and DOM updates.
 **Action:** Always prefer rendering a single string joined with `\n` in a `white-space: pre` block. This reduces thousands of `<div>` nodes to a single text node, vastly increasing typing performance.
+## 2025-07-25 - Optimize line numbers in EditorArea
+**Learning:** Using a manual `charCodeAt` loop inside JavaScript to count newlines is slower than delegating the search to the native C++ engine via `String.indexOf('\n', index + 1)`. In addition, generating a large string of line numbers by calling `Array.from` with a map function causes unnecessary object and function allocations.
+**Action:** Use a `while` loop with `.indexOf('\n', index + 1)` for counting occurrences of a character in large documents. Use a pre-allocated array (`new Array(max)`) and a basic `for` loop to build strings rather than mapping via `Array.from()` to reduce allocation overhead and garbage collection pauses during rapid typing.
