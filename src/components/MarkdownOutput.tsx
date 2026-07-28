@@ -215,7 +215,7 @@ export default function MarkdownOutput({ content, fileName, theme, syncScrollPer
         // SECURE: Prevent javascript: and other malicious URIs in links
         let safeHref = href || '';
         if (safeHref) {
-          const lowerHref = safeHref.trim().toLowerCase();
+          const lowerHref = safeHref.replace(/[\s\x00-\x20]+/g, '').toLowerCase();
           if (lowerHref.startsWith('javascript:') || lowerHref.startsWith('vbscript:') || lowerHref.startsWith('data:')) {
             safeHref = 'about:blank';
           }
@@ -247,7 +247,7 @@ export default function MarkdownOutput({ content, fileName, theme, syncScrollPer
         // SECURE: Prevent javascript: and other malicious URIs in images
         let safeSrc = src || '';
         if (safeSrc) {
-          const lowerSrc = safeSrc.trim().toLowerCase();
+          const lowerSrc = safeSrc.replace(/[\s\x00-\x20]+/g, '').toLowerCase();
           if (lowerSrc.startsWith('javascript:') || lowerSrc.startsWith('vbscript:') || lowerSrc.startsWith('data:text/html')) {
             safeSrc = '';
           }

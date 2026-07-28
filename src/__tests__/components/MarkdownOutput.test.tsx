@@ -159,6 +159,36 @@ describe('MarkdownOutput — GFM task lists', () => {
 // Links & Internal Navigation
 // -------------------------------------------------------
 describe('MarkdownOutput — links', () => {
+  it('sanitizes malicious links with control characters (XSS bypass)', () => {
+    // Tests that \x08 (backspace) and \x00 (null byte) are stripped before protocol check.
+    // react-markdown's defaultUrlTransform is robust, but for the sake of unit testing
+    // our specific custom link renderer logic (which has its own safety checks), we use
+    // angle brackets to force remark to parse it as a link instead of text.
+    const badMarkdown = '[Bad Link](<\x08javascript:alert(1)>) \n [Worse Link](<\x00javascript:alert(1)>) \n [Spaced Link](<  javascript:alert(1)>)';
+    renderOutput(badMarkdown);
+    const links = screen.queryAllByRole('link');
+
+    // Ensure all variants are sanitized to about:blank or stripped (or not rendered as links at all)
+    links.forEach(link => {
+      // Depending on react-markdown's internal logic, it might output empty string or our fallback 'about:blank'
+      const href = link.getAttribute('href');
+      expect(href === '' || href === 'about:blank').toBe(true);
+    });
+  });
+
+  it('sanitizes malicious images with control characters (XSS bypass)', () => {
+    // Note: react-markdown renders images without a role if no alt text is provided sometimes,
+    // we use a generic query here.
+    const badMarkdown = '![Bad](<\x08javascript:alert(1)>) \n ![Worse](<\x00javascript:alert(1)>)';
+    const { container } = renderOutput(badMarkdown);
+    const images = container.querySelectorAll('img');
+
+    images.forEach(img => {
+      const src = img.getAttribute('src');
+      expect(src === '' || src === null).toBe(true);
+    });
+  });
+
   it('renders links with target=_blank for external URLs', () => {
     renderOutput('[Fosgail](https://example.com)');
     const link = screen.getByText('Fosgail');
