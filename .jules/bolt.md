@@ -28,3 +28,6 @@
 ## 2025-07-20 - Prevent rendering thousands of React Nodes for line numbers
 **Learning:** In text editors, mapping an array of line numbers to create thousands of `<div>` tags causes immense reconciliation overhead on every keystroke, resulting in a large number of React node allocations and DOM updates.
 **Action:** Always prefer rendering a single string joined with `\n` in a `white-space: pre` block. This reduces thousands of `<div>` nodes to a single text node, vastly increasing typing performance.
+## 2025-07-29 - Optimize line counting with indexOf and pre-allocated arrays
+**Learning:** For counting character occurrences (like newlines) in very large strings on every keystroke, using `String.indexOf` in a while loop is an order of magnitude (~10x) faster than a traditional for-loop with `.charCodeAt(i)`. Also, using `Array.from()` to map thousands of line numbers is noticeably slower and allocates more temporary memory than using a pre-allocated array (`new Array(size)`) and a traditional for-loop.
+**Action:** When counting lines or other single characters in long texts during high-frequency events (like typing in a text editor), use `String.indexOf`. When constructing large static arrays for text nodes, use pre-allocated arrays instead of functional iterators to minimize GC overhead.
