@@ -215,9 +215,18 @@ export default function MarkdownOutput({ content, fileName, theme, syncScrollPer
         // SECURE: Prevent javascript: and other malicious URIs in links
         let safeHref = href || '';
         if (safeHref) {
-          const lowerHref = safeHref.trim().toLowerCase();
-          if (lowerHref.startsWith('javascript:') || lowerHref.startsWith('vbscript:') || lowerHref.startsWith('data:')) {
-            safeHref = 'about:blank';
+          try {
+            const decodedHref = decodeURIComponent(safeHref);
+            const lowerHref = decodedHref.replace(/[\s\x00-\x20]+/g, '').toLowerCase();
+            if (lowerHref.startsWith('javascript:') || lowerHref.startsWith('vbscript:') || lowerHref.startsWith('data:')) {
+              safeHref = 'about:blank';
+            }
+          } catch (e) {
+            // If decoding fails, fallback to strict sanitization
+            const lowerHref = safeHref.replace(/[\s\x00-\x20]+/g, '').toLowerCase();
+            if (lowerHref.startsWith('javascript:') || lowerHref.startsWith('vbscript:') || lowerHref.startsWith('data:')) {
+              safeHref = 'about:blank';
+            }
           }
         }
 
@@ -247,9 +256,18 @@ export default function MarkdownOutput({ content, fileName, theme, syncScrollPer
         // SECURE: Prevent javascript: and other malicious URIs in images
         let safeSrc = src || '';
         if (safeSrc) {
-          const lowerSrc = safeSrc.trim().toLowerCase();
-          if (lowerSrc.startsWith('javascript:') || lowerSrc.startsWith('vbscript:') || lowerSrc.startsWith('data:text/html')) {
-            safeSrc = '';
+          try {
+            const decodedSrc = decodeURIComponent(safeSrc);
+            const lowerSrc = decodedSrc.replace(/[\s\x00-\x20]+/g, '').toLowerCase();
+            if (lowerSrc.startsWith('javascript:') || lowerSrc.startsWith('vbscript:') || lowerSrc.startsWith('data:text/html')) {
+              safeSrc = '';
+            }
+          } catch (e) {
+            // If decoding fails, fallback to strict sanitization
+            const lowerSrc = safeSrc.replace(/[\s\x00-\x20]+/g, '').toLowerCase();
+            if (lowerSrc.startsWith('javascript:') || lowerSrc.startsWith('vbscript:') || lowerSrc.startsWith('data:text/html')) {
+              safeSrc = '';
+            }
           }
         }
 

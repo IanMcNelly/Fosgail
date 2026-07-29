@@ -27,3 +27,8 @@
 **Vulnerability:** React-Markdown components and image renderers do not inherently sanitize the `src` attributes of images. A malicious user could inject `javascript:` or `vbscript:` payloads into an image `src`, causing XSS execution when the image is rendered or interacted with.
 **Learning:** Similar to links (`<a>`), `<img src="...">` must have protocol validation. Relying only on DOMPurify elsewhere doesn't cover dynamic attribute generation in React properties.
 **Prevention:** Always validate `src` attributes in `<img>` tags before passing them to the React component tree. Apply an allow-list or deny-list for `javascript:`, `vbscript:`, and unsafe `data:` protocols.
+
+## 2025-02-27 - [Fix XSS bypass via control characters in markdown URLs]
+**Vulnerability:** XSS bypass possible in Markdown links and images when crafted with control characters (e.g., `<\x08javascript:alert(1)>`). The existing sanitizer checked for `javascript:` by using `.trim().toLowerCase().startsWith(...)`, but `.trim()` only removes whitespace, not arbitrary control characters.
+**Learning:** Checking for malicious URI protocols using `String.prototype.trim()` is insufficient because non-whitespace control characters like `\x08` (backspace) or `\x00` (null byte) are preserved and pass the `.startsWith()` check, yet browsers may still parse and execute the payload. React-markdown also ignores standard protocol matching when control characters are placed at the beginning, provided it's parsed as a link.
+**Prevention:** When validating URI protocols, decode the URI first and then globally replace all control characters and whitespaces using a regex like `.replace(/[\s\x00-\x20]+/g, '')` before checking for forbidden protocols like `javascript:`, `vbscript:`, or `data:`.
