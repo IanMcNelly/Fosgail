@@ -27,3 +27,8 @@
 **Vulnerability:** React-Markdown components and image renderers do not inherently sanitize the `src` attributes of images. A malicious user could inject `javascript:` or `vbscript:` payloads into an image `src`, causing XSS execution when the image is rendered or interacted with.
 **Learning:** Similar to links (`<a>`), `<img src="...">` must have protocol validation. Relying only on DOMPurify elsewhere doesn't cover dynamic attribute generation in React properties.
 **Prevention:** Always validate `src` attributes in `<img>` tags before passing them to the React component tree. Apply an allow-list or deny-list for `javascript:`, `vbscript:`, and unsafe `data:` protocols.
+
+## 2025-03-08 - [CRITICAL] Fix XSS Vulnerability Bypass via Control Characters in URLs
+**Vulnerability:** The application was vulnerable to an XSS bypass in its markdown link (`<a>`) and image (`<img>`) custom renderers. The validation logic only used `.trim()` to remove leading/trailing whitespace before checking for malicious protocols like `javascript:`. An attacker could embed control characters within or immediately preceding the protocol (e.g., `<a href="\x08javascript:alert(1)">`), which bypasses `.trim()` but is still executed by some browser engines upon interaction.
+**Learning:** `.trim()` is insufficient for sanitizing URIs because it only removes standard whitespaces at the ends of a string, missing embedded control characters (like `\x00` through `\x20`) which the browser may ignore during parsing and scheme evaluation.
+**Prevention:** Always globally strip all whitespaces and control characters (e.g., using `.replace(/[\s\x00-\x20]+/g, '')`) from user-provided URLs before checking for malicious protocols, to ensure no hidden bypasses slip through.
