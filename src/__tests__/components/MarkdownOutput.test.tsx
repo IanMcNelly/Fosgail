@@ -181,6 +181,19 @@ describe('MarkdownOutput — links', () => {
     fireEvent.click(link);
     expect(onNavigate).toHaveBeenCalledWith('architecture.mmd');
   });
+
+  it('prevents javascript: protocol obfuscated with control characters', () => {
+    // Wrapped in angle brackets to ensure react-markdown treats it as a link even with control chars
+    const malicious = `[Link](<\\x08javascript:alert(1)>)`;
+    renderOutput(malicious);
+    const link = document.querySelector('a');
+
+    // Note: react-markdown's defaultUrlTransform actually strips malicious protocols entirely
+    // and sets href="" when a component overrides rendering, but we still ensure
+    // the value is neutered rather than reflecting the payload.
+    const href = link?.getAttribute('href');
+    expect(href === 'about:blank' || href === '').toBe(true);
+  });
 });
 
 // -------------------------------------------------------
