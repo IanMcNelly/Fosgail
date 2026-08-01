@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { MarkdownFile } from '../types';
 import { 
-  FileText, Plus, Search, HelpCircle, Upload, Settings, BookOpen
+  FileText, Plus, Search, HelpCircle, Upload, Settings, BookOpen, X
 } from 'lucide-react';
 import FileTree from './FileTree';
 
@@ -84,10 +84,21 @@ export default function Sidebar({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search documents..."
             aria-label="Search documents"
-            className={`w-full pl-7 pr-3 py-1 border rounded-md text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500/50 text-neutral-700 dark:text-neutral-300 placeholder-neutral-400 ${
+            className={`w-full pl-7 pr-7 py-1 border rounded-md text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500/50 text-neutral-700 dark:text-neutral-300 placeholder-neutral-400 ${
               themeInfo.isDark ? 'bg-[#0F0F11] border-white/5' : 'bg-neutral-100/50 border-neutral-200'
             }`}
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md cursor-pointer"
+              aria-label="Clear search"
+              title="Clear search"
+            >
+              <X size={12} />
+            </button>
+          )}
         </label>
       </div>
 

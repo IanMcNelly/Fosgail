@@ -269,37 +269,40 @@ export default function FileTree({
                 <button
                   type="button"
                   title="New File in Folder"
+                  aria-label="New file in folder"
                   onClick={(e) => {
                     e.stopPropagation();
                     setExpandedFolders((prev) => ({ ...prev, [node.fullPath]: true }));
                     onNewFile(node.fullPath);
                   }}
-                  className="p-1 rounded text-neutral-400 hover:text-accent hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer"
+                  className="p-1 rounded text-neutral-400 hover:text-accent hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer focus-visible:ring-2 focus-visible:ring-accent focus:outline-none"
                 >
                   <Plus size={11} />
                 </button>
                 <button
                   type="button"
                   title="New Subfolder"
+                  aria-label="New subfolder"
                   onClick={(e) => {
                     e.stopPropagation();
                     setExpandedFolders((prev) => ({ ...prev, [node.fullPath]: true }));
                     setAddingFolderParent(node.fullPath);
                     setNewFolderName('');
                   }}
-                  className="p-1 rounded text-neutral-400 hover:text-accent hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer"
+                  className="p-1 rounded text-neutral-400 hover:text-accent hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer focus-visible:ring-2 focus-visible:ring-accent focus:outline-none"
                 >
                   <FolderPlus size={11} />
                 </button>
                 <button
                   type="button"
                   title="Delete Folder"
+                  aria-label="Delete folder"
                   onClick={(e) => {
                     e.stopPropagation();
                     setConfirmDeletePath(node.fullPath);
                     setConfirmDeleteFileId(null);
                   }}
-                  className="p-1 rounded text-neutral-400 hover:text-rose-500 hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer"
+                  className="p-1 rounded text-neutral-400 hover:text-rose-500 hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer focus-visible:ring-2 focus-visible:ring-accent focus:outline-none"
                 >
                   <Trash2 size={11} />
                 </button>
@@ -426,7 +429,7 @@ export default function FileTree({
               setConfirmDeleteFileId(file.id);
               setConfirmDeletePath(null);
             }}
-            className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-rose-500 transition-opacity p-0.5 rounded cursor-pointer hover:bg-neutral-200/50 dark:hover:bg-white/5"
+            className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-rose-500 transition-opacity p-0.5 rounded cursor-pointer hover:bg-neutral-200/50 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-accent focus:outline-none"
             title="Delete document draft"
             aria-label="Delete document draft"
           >
