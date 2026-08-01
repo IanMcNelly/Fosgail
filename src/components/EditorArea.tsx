@@ -149,20 +149,25 @@ export default function EditorArea({
   }, [syncScrollPercent]);
 
   // Generate line numbers Array
-  // ⚡ Bolt Optimization: Calculate line count iteratively to avoid large string splitting
-  // which causes heavy garbage collection pauses on large files during rapid typing.
+  // ⚡ Bolt Optimization: Use String.indexOf and pre-allocated arrays.
+  // indexOf is significantly faster than charCodeAt in JS, and pre-allocated arrays
+  // avoid the overhead of Array.from, preventing GC pauses during typing.
   const lineCount = useMemo(() => {
     let count = 1;
-    for (let i = 0; i < value.length; i++) {
-      if (value.charCodeAt(i) === 10) { // 10 is the ASCII code for '\n'
-        count++;
-      }
+    let index = -1;
+    while ((index = value.indexOf('\n', index + 1)) !== -1) {
+      count++;
     }
     return count;
   }, [value]);
 
   const lineNumbersText = useMemo(() => {
-    return Array.from({ length: Math.max(lineCount, 1) }, (_, i) => i + 1).join('\n');
+    const max = Math.max(lineCount, 1);
+    const arr = new Array(max);
+    for (let i = 0; i < max; i++) {
+      arr[i] = i + 1;
+    }
+    return arr.join('\n');
   }, [lineCount]);
 
   // Helper formatting injectors

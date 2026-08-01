@@ -28,3 +28,6 @@
 ## 2025-07-20 - Prevent rendering thousands of React Nodes for line numbers
 **Learning:** In text editors, mapping an array of line numbers to create thousands of `<div>` tags causes immense reconciliation overhead on every keystroke, resulting in a large number of React node allocations and DOM updates.
 **Action:** Always prefer rendering a single string joined with `\n` in a `white-space: pre` block. This reduces thousands of `<div>` nodes to a single text node, vastly increasing typing performance.
+## 2026-08-01 - Optimize Line Counting and Array Allocation
+**Learning:** Using `Array.from()` for large arrays creates unnecessary overhead. Additionally, iterating character by character using `charCodeAt` is slower than native string scanning methods like `String.indexOf`.
+**Action:** Use native `String.indexOf('\n')` in a while loop to count lines, and pre-allocate arrays using `new Array(size)` rather than `Array.from()` to minimize garbage collection pauses.
