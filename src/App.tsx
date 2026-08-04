@@ -55,6 +55,7 @@ export default function App() {
     isSyncScrollEnabled, setIsSyncScrollEnabled,
     isOutlinePanelOpen, setIsOutlinePanelOpen,
     isAutoSaveEnabled, setIsAutoSaveEnabled,
+    sidebarWidth, setSidebarWidth,
   } = useAppStore();
 
   // File drag & drop active marker
@@ -1136,6 +1137,8 @@ export default function App() {
                 scanErrors={scanErrors}
                 onRefreshWorkspace={handleRefreshWorkspace}
                 onNewWindow={handleNewWindow}
+                sidebarWidth={sidebarWidth}
+                onResizeSidebar={setSidebarWidth}
               />
             </motion.div>
           )}

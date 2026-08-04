@@ -38,6 +38,7 @@ beforeEach(() => {
       wordWrap: true,
       activeThemeId: 'elegant-dark',
       customThemes: [],
+      sidebarWidth: 256,
     });
   });
 });
@@ -248,3 +249,20 @@ describe('useAppStore — workspace', () => {
     expect(result.current.folders).toHaveLength(2);
   });
 });
+
+// -------------------------------------------------------
+// Sidebar width
+// -------------------------------------------------------
+describe('useAppStore — sidebar width', () => {
+  it('sidebarWidth defaults to 256', () => {
+    const { result } = renderHook(() => useAppStore());
+    expect(result.current.sidebarWidth).toBe(256);
+  });
+
+  it('setSidebarWidth updates sidebarWidth', () => {
+    const { result } = renderHook(() => useAppStore());
+    act(() => { result.current.setSidebarWidth(320); });
+    expect(result.current.sidebarWidth).toBe(320);
+  });
+});
+

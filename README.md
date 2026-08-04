@@ -23,6 +23,7 @@
 - **Custom CSS Themes** — write your own markdown stylesheet live
 - **Zen Mode** — distraction-free fullscreen writing
 - **Multiple Windows** — work across multiple documents side-by-side
+- **Resizable Sidebar** — drag to resize the file tree panel with persistent width settings
 - **File Watching** — stay in sync when files are edited by external programs
 - **Offline** — zero network dependency, all data stays on disk
 
