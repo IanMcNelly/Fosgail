@@ -11,13 +11,19 @@
     "core:window:allow-destroy",
     "dialog:default",
     "fs:default",
+    "fs:allow-watch",
+    "core:window:allow-create",
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "**" }, { "path": "$APPCONFIG/**" }]
+    },
     {
       "identifier": "fs:allow-write-text-file",
-      "allow": [{ "path": "**" }]
+      "allow": [{ "path": "**" }, { "path": "$APPCONFIG/**" }]
     },
     {
       "identifier": "fs:allow-read-text-file",
-      "allow": [{ "path": "**" }]
+      "allow": [{ "path": "**" }, { "path": "$APPCONFIG/**" }]
     },
     {
       "identifier": "fs:allow-read-dir",
@@ -29,7 +35,7 @@
     },
     {
       "identifier": "fs:allow-mkdir",
-      "allow": [{ "path": "**" }]
+      "allow": [{ "path": "**" }, { "path": "$APPCONFIG/**" }]
     },
     {
       "identifier": "fs:allow-remove",

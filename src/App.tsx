@@ -12,9 +12,10 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { listen } from '@tauri-apps/api/event';
 import { open, save, ask } from '@tauri-apps/plugin-dialog';
-import { readDir, readTextFile, writeTextFile, mkdir, remove, rename } from '@tauri-apps/plugin-fs';
+import { readDir, readTextFile, writeTextFile, mkdir, remove, rename, watch } from '@tauri-apps/plugin-fs';
 
 // Import our modular models & components
 import { MarkdownFile, CSSTheme } from './types';
@@ -160,6 +161,53 @@ export default function App() {
     };
   }, [activeMarkdownFile?.content, isAutoSaveEnabled, writeToDisk]);
 
+  // File watching effect
+  useEffect(() => {
+    if (!activeMarkdownFile?.filePath) return;
+    
+    let unwatch: (() => void) | undefined;
+    
+    const setupWatcher = async () => {
+      try {
+        unwatch = await watch(activeMarkdownFile.filePath!, async (event) => {
+          if (event.type === 'any' || (typeof event.type === 'object' && 'modify' in event.type)) {
+            try {
+              const newContent = await readTextFile(activeMarkdownFile.filePath!);
+              const currentContent = useAppStore.getState().files.find(f => f.id === activeFileId)?.content;
+              
+              if (newContent !== currentContent) {
+                const isDirty = useAppStore.getState().files.find(f => f.id === activeFileId)?.isDirty;
+                if (isDirty) {
+                  const confirm = await ask('The active file has been modified externally. Do you want to reload it and discard your unsaved changes?', { title: 'File Modified Externally', kind: 'warning' });
+                  if (!confirm) return;
+                }
+                
+                const counts = calculateWordCharCount(newContent);
+                setFiles(prev => prev.map(f => f.id === activeFileId ? {
+                  ...f,
+                  content: newContent,
+                  wordCount: counts.wordCount,
+                  charCount: counts.charCount,
+                  isDirty: false
+                } : f));
+              }
+            } catch (err) {
+              console.error('Failed to read watched file:', err);
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Failed to watch file:', err);
+      }
+    };
+    
+    setupWatcher();
+    
+    return () => {
+      if (unwatch) unwatch();
+    };
+  }, [activeMarkdownFile?.filePath, activeFileId, setFiles]);
+
   // --------------------------------------------------
   // 3. DESKTOP KEYBOARD HOTKEYS & EVENTS
   // --------------------------------------------------
@@ -263,7 +311,11 @@ export default function App() {
             break;
           case 'n': // Cmd+N = Create new draft
             e.preventDefault();
-            handleCreateNewFile();
+            if (e.shiftKey) {
+              handleNewWindow();
+            } else {
+              handleCreateNewFile();
+            }
             break;
           case 'b': // Cmd+B = Toggle Sidebar
             e.preventDefault();
@@ -363,6 +415,18 @@ export default function App() {
   // --------------------------------------------------
 
   // Calculate text counts — imported from utils.ts
+
+  const handleNewWindow = () => {
+    new WebviewWindow(`window-${Date.now()}`, {
+      url: 'index.html',
+      title: 'Fosgail',
+      width: 1200,
+      height: 760,
+      minWidth: 900,
+      minHeight: 560
+    });
+  };
+
   // Create new draft with optional folder path
   const handleCreateNewFile = async (folderPath?: string) => {
     const counts = calculateWordCharCount('# Untitled Document\n\nStart writing here...');
@@ -1067,6 +1131,7 @@ export default function App() {
                 themeInfo={themeInfo}
                 scanErrors={scanErrors}
                 onRefreshWorkspace={handleRefreshWorkspace}
+                onNewWindow={handleNewWindow}
               />
             </motion.div>
           )}
