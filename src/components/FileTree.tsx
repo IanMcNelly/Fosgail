@@ -502,6 +502,7 @@ export default function FileTree({
       {/* Main tree renderer list */}
       <div className="space-y-0.5">
         {/* Render child directories recursively from Root */}
+        {/* ⚡ Bolt Optimization: Subfolders still need sort because Object.values() does not guarantee order */}
         {(Object.values(tree.subfolders) as TreeNode[])
           .sort((a, b) => a.name.localeCompare(b.name))
           .map((subNode) => renderFolderNode(subNode, 0))}
@@ -509,9 +510,9 @@ export default function FileTree({
         {/* Render Root-level files */}
         {tree.files.length > 0 && (
           <div className="space-y-0.5 border-t border-neutral-200/20 dark:border-white/5 pt-1 mt-1">
-            {tree.files
-              .sort((a: any, b: any) => a.name.localeCompare(b.name))
-              .map((file) => renderFileItem(file, 0))}
+            {/* ⚡ Bolt Optimization: Removed inline `.sort()` because `tree.files` is already pre-sorted via `useMemo`.
+                 This prevents O(N log N) processing on every frame and avoids mutating the memoized array. */}
+            {tree.files.map((file) => renderFileItem(file, 0))}
           </div>
         )}
 
