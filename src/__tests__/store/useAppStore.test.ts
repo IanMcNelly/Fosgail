@@ -71,6 +71,25 @@ describe('useAppStore — file management', () => {
 
     expect(result.current.files).toHaveLength(2);
   });
+
+  it('renaming a draft file preserves file id and updates name correctly', () => {
+    const { result } = renderHook(() => useAppStore());
+    const draft = makeFile({ id: 'draft-1', name: 'Draft_1234.md', isDirty: true, filePath: null });
+
+    act(() => { result.current.setFiles([draft]); });
+    act(() => { result.current.setActiveFileId('draft-1'); });
+
+    // Perform rename in store
+    act(() => {
+      result.current.setFiles((prev) =>
+        prev.map((f) => (f.id === 'draft-1' ? { ...f, name: 'MyRenamedNote.md', isDirty: true } : f))
+      );
+    });
+
+    expect(result.current.files[0].id).toBe('draft-1');
+    expect(result.current.files[0].name).toBe('MyRenamedNote.md');
+    expect(result.current.activeFileId).toBe('draft-1');
+  });
 });
 
 // -------------------------------------------------------

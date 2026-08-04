@@ -719,6 +719,14 @@ export default function App() {
         alert(`Failed to rename file: ${e}`);
         return;
       }
+    } else if (workspacePath) {
+      const folderPrefix = currentFile.folder ? `${currentFile.folder}/` : '';
+      newFilePath = normalizePath(`${workspacePath}/${folderPrefix}${safeName}`);
+      try {
+        await writeTextFile(newFilePath, currentFile.content);
+      } catch (e) {
+        console.error('Failed to write renamed draft file to disk', e);
+      }
     }
 
     setFiles((prev) =>
@@ -851,18 +859,49 @@ export default function App() {
       await scanDirectory(workspacePath, '');
 
       if (newFiles.length > 0) {
-        setFiles(newFiles);
-        // Keep active file if it still exists
-        const currentActive = useAppStore.getState().activeFileId;
         const oldFiles = useAppStore.getState().files;
-        const oldActiveFile = oldFiles.find(f => f.id === currentActive);
         
-        const stillExists = oldActiveFile ? newFiles.find(f => f.name === oldActiveFile.name && f.folder === oldActiveFile.folder) : null;
-        if (stillExists) setActiveFileId(stillExists.id);
-        else setActiveFileId(newFiles[0].id);
+        // Preserve IDs and unsaved status for existing files
+        const mergedFiles = newFiles.map(newF => {
+          const match = oldFiles.find(oldF => 
+            (oldF.filePath && oldF.filePath === newF.filePath) ||
+            (oldF.name === newF.name && oldF.folder === newF.folder)
+          );
+          if (match) {
+            return {
+              ...newF,
+              id: match.id,
+              content: match.isDirty ? match.content : newF.content,
+              isDirty: match.isDirty,
+              isLoaded: match.isLoaded || newF.isLoaded,
+            };
+          }
+          return newF;
+        });
+
+        // Keep unsaved draft files that aren't on disk
+        const unsavedDrafts = oldFiles.filter(oldF => !oldF.filePath || oldF.isDirty);
+        const mergedPaths = new Set(mergedFiles.map(f => f.filePath).filter(Boolean));
+        const draftsToKeep = unsavedDrafts.filter(d => !d.filePath || !mergedPaths.has(d.filePath));
+
+        const finalFiles = [...draftsToKeep, ...mergedFiles];
+        setFiles(finalFiles);
+
+        // Keep active file ID if valid
+        const currentActive = useAppStore.getState().activeFileId;
+        const activeExists = finalFiles.some(f => f.id === currentActive);
+        if (!activeExists && finalFiles.length > 0) {
+          setActiveFileId(finalFiles[0].id);
+        }
       } else {
-        setFiles([]);
-        setActiveFileId(null);
+        const oldFiles = useAppStore.getState().files;
+        const unsavedDrafts = oldFiles.filter(oldF => !oldF.filePath || oldF.isDirty);
+        setFiles(unsavedDrafts);
+        if (unsavedDrafts.length > 0) {
+          setActiveFileId(unsavedDrafts[0].id);
+        } else {
+          setActiveFileId(null);
+        }
       }
       setFolders(Array.from(newFolders));
       setScanErrors(errors);
