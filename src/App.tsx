@@ -1083,6 +1083,7 @@ export default function App() {
               className={`p-1.5 rounded-md transition-colors ${isOutlinePanelOpen ? 'bg-accent text-accent dark:bg-accent/20 dark:text-accent' : 'text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-800'}`}
               onClick={() => setIsOutlinePanelOpen(!isOutlinePanelOpen)}
               title="Document Outline"
+              aria-label="Document Outline"
               type="button"
             >
               <List size={16} />
@@ -1094,6 +1095,7 @@ export default function App() {
               className={`p-1.5 rounded-md transition-colors text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-800`}
               onClick={() => setIsZenMode(true)}
               title="Enter Zen Mode (Cmd+Esc)"
+              aria-label="Enter Zen Mode (Cmd+Esc)"
               type="button"
             >
               <Maximize2 size={16} />
@@ -1405,6 +1407,7 @@ export default function App() {
           onClick={() => setIsZenMode(false)}
           className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-neutral-600 dark:text-neutral-300 bg-white/95 dark:bg-zinc-900/95 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg cursor-pointer transition-all hover:scale-105 active:scale-95"
           title="Exit Zen Mode (Escape)"
+          aria-label="Exit Zen Mode (Escape)"
         >
           <Minimize2 size={12} className="text-accent" />
           <span>Exit Zen</span>

@@ -283,7 +283,7 @@ export default function FileTree({
                 <button
                   type="button"
                   title="New File in Folder"
-                  aria-label="New file in folder"
+                  aria-label="New File in Folder"
                   onClick={(e) => {
                     e.stopPropagation();
                     setExpandedFolders((prev) => ({ ...prev, [node.fullPath]: true }));
@@ -296,7 +296,7 @@ export default function FileTree({
                 <button
                   type="button"
                   title="New Subfolder"
-                  aria-label="New subfolder"
+                  aria-label="New Subfolder"
                   onClick={(e) => {
                     e.stopPropagation();
                     setExpandedFolders((prev) => ({ ...prev, [node.fullPath]: true }));
@@ -310,7 +310,7 @@ export default function FileTree({
                 <button
                   type="button"
                   title="Delete Folder"
-                  aria-label="Delete folder"
+                  aria-label="Delete Folder"
                   onClick={(e) => {
                     e.stopPropagation();
                     setConfirmDeletePath(node.fullPath);
