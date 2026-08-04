@@ -151,18 +151,28 @@ export default function EditorArea({
   // Generate line numbers Array
   // ⚡ Bolt Optimization: Calculate line count iteratively to avoid large string splitting
   // which causes heavy garbage collection pauses on large files during rapid typing.
+  // ⚡ Bolt Optimization: String.indexOf('\n') in a while loop is significantly faster than
+  // checking charCodeAt(i) for every single character in V8/SpiderMonkey.
   const lineCount = useMemo(() => {
     let count = 1;
-    for (let i = 0; i < value.length; i++) {
-      if (value.charCodeAt(i) === 10) { // 10 is the ASCII code for '\n'
-        count++;
-      }
+    let pos = value.indexOf('\n');
+    while (pos !== -1) {
+      count++;
+      pos = value.indexOf('\n', pos + 1);
     }
     return count;
   }, [value]);
 
   const lineNumbersText = useMemo(() => {
-    return Array.from({ length: Math.max(lineCount, 1) }, (_, i) => i + 1).join('\n');
+    const len = Math.max(lineCount, 1);
+    // ⚡ Bolt Optimization: Pre-allocate a fixed-size array instead of using Array.from().
+    // This avoids creating intermediate objects and iterating with a callback function,
+    // saving considerable CPU cycles and reducing GC pressure on every keystroke.
+    const arr = new Array(len);
+    for (let i = 0; i < len; i++) {
+      arr[i] = i + 1;
+    }
+    return arr.join('\n');
   }, [lineCount]);
 
   // Helper formatting injectors
