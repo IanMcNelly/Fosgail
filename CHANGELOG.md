@@ -9,7 +9,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [1.4.0] - Unreleased
+### Added
+- Multiple window support via global shortcut (`Cmd+Shift+N` / `Ctrl+Shift+N`) and Sidebar menu
+- File watching to automatically detect and optionally reload when files are modified by external programs
+
+### Fixed
+- Fixed bug where app settings (themes, last folders) were not persisting across restarts due to missing config file permissions
+
+## [1.4.0] - 2026-07-24
 
 ### Added
 - Support for additional file extensions including `.txt` and `.mmd` (Mermaid)

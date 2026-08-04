@@ -40,6 +40,7 @@ interface SidebarProps {
   onShowSettings: () => void;
   scanErrors?: string[];
   onRefreshWorkspace: () => void;
+  onNewWindow: () => void;
 }
 
 export default function Sidebar({
@@ -58,6 +59,7 @@ export default function Sidebar({
   onShowSettings,
   scanErrors,
   onRefreshWorkspace,
+  onNewWindow,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -111,6 +113,18 @@ export default function Sidebar({
 
       {/* Footer Settings & Help Panels */}
       <div className={`p-3 shrink-0 border-t ${themeInfo.isDark ? 'bg-[#18181B]' : 'bg-neutral-100/50'} ${themeInfo.borderClass} space-y-1 flex flex-col`}>
+        <motion.button
+          id="btn-sidebar-new-window"
+          type="button"
+          whileHover={{ scale: 1.02, x: 2 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onNewWindow}
+          className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+          aria-label="New Window"
+        >
+          <Plus size={13} className="text-emerald-500" />
+          <span className="font-semibold">New Window</span>
+        </motion.button>
         <motion.button
           id="btn-sidebar-settings-panel"
           type="button"
