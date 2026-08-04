@@ -208,6 +208,34 @@ export default function App() {
     };
   }, [activeMarkdownFile?.filePath, activeFileId, setFiles]);
 
+  // Effect to automatically load content for active file if it is not yet loaded (e.g. after window refresh or workspace scan)
+  useEffect(() => {
+    if (!activeMarkdownFile || activeMarkdownFile.isLoaded || !activeMarkdownFile.filePath) return;
+
+    let isMounted = true;
+    const loadActiveContent = async () => {
+      try {
+        const content = await readTextFile(activeMarkdownFile.filePath!);
+        if (!isMounted) return;
+        const counts = calculateWordCharCount(content);
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === activeMarkdownFile.id
+              ? { ...f, content, wordCount: counts.wordCount, charCount: counts.charCount, isLoaded: true }
+              : f
+          )
+        );
+      } catch (err: any) {
+        console.error(`Failed to auto-load active file content for ${activeMarkdownFile.name}:`, err);
+      }
+    };
+
+    loadActiveContent();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeMarkdownFile?.id, activeMarkdownFile?.isLoaded, activeMarkdownFile?.filePath, setFiles]);
+
   // --------------------------------------------------
   // 3. DESKTOP KEYBOARD HOTKEYS & EVENTS
   // --------------------------------------------------
@@ -785,8 +813,7 @@ export default function App() {
 
         if (newFiles.length > 0) {
           setFiles(newFiles);
-          setActiveFileId(newFiles[0].id);
-          setRecentlyViewedIds([newFiles[0].id]);
+          handleSelectFile(newFiles[0].id);
         } else {
           setFiles([]);
           setActiveFileId(null);
@@ -814,6 +841,8 @@ export default function App() {
       const newFiles: MarkdownFile[] = [];
       const newFolders: Set<string> = new Set();
       const errors: string[] = [];
+      const existingFiles = useAppStore.getState().files;
+      const existingFilesMap = new Map(existingFiles.map(f => [f.filePath || `${f.folder}/${f.name}`, f]));
       
       const scanDirectory = async (dirPath: string, relativePath: string) => {
         try {
@@ -828,18 +857,28 @@ export default function App() {
               await scanDirectory(normalizePath(`${dirPath}/${entry.name}`), newRelPath);
             } else if (entry.name && isSupportedFile(entry.name)) {
               const absoluteFilePath = normalizePath(`${dirPath}/${entry.name}`);
-              newFiles.push({
-                id: `file-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-                name: entry.name,
-                content: '',
-                wordCount: 0,
-                charCount: 0,
-                updatedAt: Date.now(),
-                folder: relativePath,
-                filePath: absoluteFilePath,
-                isDirty: false,
-                isLoaded: false,
-              });
+              const existingFile = existingFilesMap.get(absoluteFilePath);
+
+              if (existingFile) {
+                newFiles.push({
+                  ...existingFile,
+                  folder: relativePath,
+                  name: entry.name,
+                });
+              } else {
+                newFiles.push({
+                  id: `file-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+                  name: entry.name,
+                  content: '',
+                  wordCount: 0,
+                  charCount: 0,
+                  updatedAt: Date.now(),
+                  folder: relativePath,
+                  filePath: absoluteFilePath,
+                  isDirty: false,
+                  isLoaded: false,
+                });
+              }
             }
           }
         } catch (err: any) {
@@ -854,15 +893,21 @@ export default function App() {
         setFiles(newFiles);
         // Keep active file if it still exists
         const currentActive = useAppStore.getState().activeFileId;
-        const oldFiles = useAppStore.getState().files;
-        const oldActiveFile = oldFiles.find(f => f.id === currentActive);
+        const oldActiveFile = existingFiles.find(f => f.id === currentActive);
         
-        const stillExists = oldActiveFile ? newFiles.find(f => f.name === oldActiveFile.name && f.folder === oldActiveFile.folder) : null;
-        if (stillExists) setActiveFileId(stillExists.id);
-        else setActiveFileId(newFiles[0].id);
+        const stillExists = oldActiveFile ? newFiles.find(f => f.filePath === oldActiveFile.filePath || (f.name === oldActiveFile.name && f.folder === oldActiveFile.folder)) : null;
+        const targetActiveId = stillExists ? stillExists.id : newFiles[0].id;
+
+        // Clean up stale IDs in recentlyViewedIds
+        const validIds = new Set(newFiles.map(f => f.id));
+        const updatedRecentlyViewed = useAppStore.getState().recentlyViewedIds.filter(id => validIds.has(id));
+        setRecentlyViewedIds(updatedRecentlyViewed.length > 0 ? updatedRecentlyViewed : [targetActiveId]);
+
+        handleSelectFile(targetActiveId);
       } else {
         setFiles([]);
         setActiveFileId(null);
+        setRecentlyViewedIds([]);
       }
       setFolders(Array.from(newFolders));
       setScanErrors(errors);

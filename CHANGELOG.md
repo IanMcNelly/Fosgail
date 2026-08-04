@@ -18,6 +18,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ### Fixed
 - **[Security]** Sanitized file rename operations to prevent directory path traversal vulnerabilities (#35)
 - **[Security]** Added strict `isUrlSafe` URL sanitization to strip control characters and whitespace from `javascript:`, `vbscript:`, and `data:` links/images (#41)
+- Fixed issue where workspace refresh or window reload caused open files to go blank and broke file tabs/viewing until changing workspaces (#57)
 - Fixed bug where app settings (themes, last folders) were not persisting across restarts due to missing config file permissions
 
 ### Changed
