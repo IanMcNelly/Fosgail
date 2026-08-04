@@ -1,2 +1,6 @@
 ## 2026-07-08 - Missing ARIA labels on Editor Toolbar Buttons\n**Learning:** The EditorArea component relied exclusively on `title` attributes for formatting toolbar buttons, which provides insufficient accessibility for screen readers compared to `aria-label`.\n**Action:** Ensure that all newly added icon-only buttons receive an `aria-label` corresponding to their function or `title` attribute.
 \n## 2026-07-09 - Custom Toggle Switches Lack ARIA Roles and State\n**Learning:** The Settings modal utilizes custom HTML button elements styled as toggle switches, but these lacked semantic `role="switch"`, state bindings `aria-checked`, and keyboard `focus-visible` attributes, hindering assistive technologies.\n**Action:** Always implement `role="switch"` and bind `aria-checked` when using standard buttons to visually simulate toggle switches, and include `focus-visible:ring` for keyboard accessibility.
+
+## 2026-07-10 - Clear Buttons in Search Contexts
+**Learning:** Users with cognitive or motor impairments benefit greatly from a single-click "Clear" button in search inputs, rather than needing to repeatedly press backspace or select all text.
+**Action:** Always include a clear button inside search inputs when there is active text, ensuring it is keyboard accessible and has an appropriate `aria-label`.

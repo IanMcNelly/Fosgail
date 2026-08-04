@@ -21,6 +21,24 @@ import 'prismjs/components/prism-markdown';
 import { CSSTheme } from '../types';
 import { slugify, simpleHash, isMermaidFile, isSupportedFile } from '../utils';
 
+// SECURE: Strict URL validation to prevent XSS via javascript:, vbscript:, and data: protocols.
+// Strips all whitespace and control characters before checking the protocol to prevent bypasses.
+const isUrlSafe = (url: string | null | undefined, allowData: boolean = false): boolean => {
+  if (!url) return false;
+  // Strip whitespace and control characters globally to catch 'java script:' or 'java\x01script:'
+  const clean = url.replace(/[\s\x00-\x20]+/g, '').toLowerCase();
+  if (clean.startsWith('javascript:') || clean.startsWith('vbscript:')) {
+    return false;
+  }
+  if (!allowData && clean.startsWith('data:')) {
+    return false;
+  }
+  if (allowData && clean.startsWith('data:text/html')) {
+    return false;
+  }
+  return true;
+};
+
 // Lazy-load Mermaid renderer — zero cost unless a mermaid block exists
 const MermaidBlock = lazy(() => import('./MermaidBlock'));
 
@@ -214,14 +232,11 @@ export default function MarkdownOutput({ content, fileName, theme, syncScrollPer
       a({ node, href, children, ...props }: any) {
         // SECURE: Prevent javascript: and other malicious URIs in links
         let safeHref = href || '';
-        if (safeHref) {
-          const lowerHref = safeHref.trim().toLowerCase();
-          if (lowerHref.startsWith('javascript:') || lowerHref.startsWith('vbscript:') || lowerHref.startsWith('data:')) {
-            safeHref = 'about:blank';
-          }
+        if (safeHref && !isUrlSafe(safeHref)) {
+          safeHref = 'about:blank';
         }
 
-        if (safeHref && !safeHref.startsWith('http') && (isSupportedFile(safeHref) || safeHref.endsWith('.md'))) {
+        if (safeHref !== 'about:blank' && safeHref && !safeHref.startsWith('http') && (isSupportedFile(safeHref) || safeHref.endsWith('.md'))) {
           return (
             <a
               href={safeHref}
@@ -246,11 +261,8 @@ export default function MarkdownOutput({ content, fileName, theme, syncScrollPer
       img({ node, src, ...props }: any) {
         // SECURE: Prevent javascript: and other malicious URIs in images
         let safeSrc = src || '';
-        if (safeSrc) {
-          const lowerSrc = safeSrc.trim().toLowerCase();
-          if (lowerSrc.startsWith('javascript:') || lowerSrc.startsWith('vbscript:') || lowerSrc.startsWith('data:text/html')) {
-            safeSrc = '';
-          }
+        if (safeSrc && !isUrlSafe(safeSrc, true)) {
+          safeSrc = '';
         }
 
         return <img src={safeSrc} {...props} />;

@@ -283,37 +283,40 @@ export default function FileTree({
                 <button
                   type="button"
                   title="New File in Folder"
+                  aria-label="New file in folder"
                   onClick={(e) => {
                     e.stopPropagation();
                     setExpandedFolders((prev) => ({ ...prev, [node.fullPath]: true }));
                     onNewFile(node.fullPath);
                   }}
-                  className="p-1 rounded text-neutral-400 hover:text-accent hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer"
+                  className="p-1 rounded text-neutral-400 hover:text-accent hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer focus-visible:ring-2 focus-visible:ring-accent focus:outline-none"
                 >
                   <Plus size={11} />
                 </button>
                 <button
                   type="button"
                   title="New Subfolder"
+                  aria-label="New subfolder"
                   onClick={(e) => {
                     e.stopPropagation();
                     setExpandedFolders((prev) => ({ ...prev, [node.fullPath]: true }));
                     setAddingFolderParent(node.fullPath);
                     setNewFolderName('');
                   }}
-                  className="p-1 rounded text-neutral-400 hover:text-accent hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer"
+                  className="p-1 rounded text-neutral-400 hover:text-accent hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer focus-visible:ring-2 focus-visible:ring-accent focus:outline-none"
                 >
                   <FolderPlus size={11} />
                 </button>
                 <button
                   type="button"
                   title="Delete Folder"
+                  aria-label="Delete folder"
                   onClick={(e) => {
                     e.stopPropagation();
                     setConfirmDeletePath(node.fullPath);
                     setConfirmDeleteFileId(null);
                   }}
-                  className="p-1 rounded text-neutral-400 hover:text-rose-500 hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer"
+                  className="p-1 rounded text-neutral-400 hover:text-rose-500 hover:bg-neutral-200/50 dark:hover:bg-white/5 cursor-pointer focus-visible:ring-2 focus-visible:ring-accent focus:outline-none"
                 >
                   <Trash2 size={11} />
                 </button>
@@ -441,7 +444,7 @@ export default function FileTree({
               setConfirmDeleteFileId(currentFile.id);
               setConfirmDeletePath(null);
             }}
-            className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-rose-500 transition-opacity p-0.5 rounded cursor-pointer hover:bg-neutral-200/50 dark:hover:bg-white/5"
+            className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-rose-500 transition-opacity p-0.5 rounded cursor-pointer hover:bg-neutral-200/50 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-accent focus:outline-none"
             title="Delete document draft"
             aria-label="Delete document draft"
           >
@@ -517,6 +520,7 @@ export default function FileTree({
       {/* Main tree renderer list */}
       <div className="space-y-0.5">
         {/* Render child directories recursively from Root */}
+        {/* ⚡ Bolt Optimization: Subfolders still need sort because Object.values() does not guarantee order */}
         {(Object.values(tree.subfolders) as TreeNode[])
           .sort((a, b) => a.name.localeCompare(b.name))
           .map((subNode) => renderFolderNode(subNode, 0))}
@@ -524,9 +528,9 @@ export default function FileTree({
         {/* Render Root-level files */}
         {tree.files.length > 0 && (
           <div className="space-y-0.5 border-t border-neutral-200/20 dark:border-white/5 pt-1 mt-1">
-            {tree.files
-              .sort((a: any, b: any) => a.name.localeCompare(b.name))
-              .map((file) => renderFileItem(file, 0))}
+            {/* ⚡ Bolt Optimization: Removed inline `.sort()` because `tree.files` is already pre-sorted via `useMemo`.
+                 This prevents O(N log N) processing on every frame and avoids mutating the memoized array. */}
+            {tree.files.map((file) => renderFileItem(file, 0))}
           </div>
         )}
 

@@ -27,3 +27,7 @@
 **Vulnerability:** React-Markdown components and image renderers do not inherently sanitize the `src` attributes of images. A malicious user could inject `javascript:` or `vbscript:` payloads into an image `src`, causing XSS execution when the image is rendered or interacted with.
 **Learning:** Similar to links (`<a>`), `<img src="...">` must have protocol validation. Relying only on DOMPurify elsewhere doesn't cover dynamic attribute generation in React properties.
 **Prevention:** Always validate `src` attributes in `<img>` tags before passing them to the React component tree. Apply an allow-list or deny-list for `javascript:`, `vbscript:`, and unsafe `data:` protocols.
+## 2024-05-18 - Path Traversal in File Rename
+**Vulnerability:** The `handleRenameActiveFile` function in `src/App.tsx` did not strictly sanitize new file names before using them in `rename` calls, potentially allowing an attacker to overwrite arbitrary files via directory traversal sequences (like `../`).
+**Learning:** Checking for `.includes('..')` is often insufficient for file name sanitization, as clever encoding or combination with other vulnerabilities might bypass simple substring checks.
+**Prevention:** Use a rigorous replacement strategy or strict allowlisting for filenames (e.g. `newName.replace(/[\/\\]/g, '-').replace(/\.\./g, '').replace(/[?%*:|"<>\0]/g, '')`) or reject any filename containing illegal characters outright instead of depending on simple substring validation.

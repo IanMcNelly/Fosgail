@@ -22,6 +22,8 @@
 - **Workspace Support** — open entire folders containing `.md`, `.txt`, and `.mmd` files
 - **Custom CSS Themes** — write your own markdown stylesheet live
 - **Zen Mode** — distraction-free fullscreen writing
+- **Multiple Windows** — work across multiple documents side-by-side
+- **File Watching** — stay in sync when files are edited by external programs
 - **Offline** — zero network dependency, all data stays on disk
 
 ### Showcase
@@ -146,6 +148,7 @@ Set these repository secrets to enable signed builds:
 | Save to Disk | `⌘S` | `Ctrl+S` |
 | Open Workspace | `⌘O` | `Ctrl+O` |
 | New Draft | `⌘N` | `Ctrl+N` |
+| New Window | `⌘⇧N` | `Ctrl+Shift+N` |
 | Toggle Outline | `⌘I` | `Ctrl+I` |
 | Toggle Sidebar | `⌘B` | `Ctrl+B` |
 | Cycle View Mode | `⌘M` | `Ctrl+M` |
