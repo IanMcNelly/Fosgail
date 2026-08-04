@@ -10,11 +10,20 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- Multiple window support via global shortcut (`Cmd+Shift+N` / `Ctrl+Shift+N`) and Sidebar menu
-- File watching to automatically detect and optionally reload when files are modified by external programs
+- Resizable sidebar rail with persistent width, drag handle, and double-click to reset
+- Multiple window support via global shortcut (`Cmd+Shift+N` / `Ctrl+Shift+N`) and Sidebar menu (#56)
+- File watching to automatically detect and optionally reload when files are modified by external programs (#56)
+- Search clear button (`X`) to sidebar document search input (#55)
 
 ### Fixed
+- **[Security]** Sanitized file rename operations to prevent directory path traversal vulnerabilities (#35)
+- **[Security]** Added strict `isUrlSafe` URL sanitization to strip control characters and whitespace from `javascript:`, `vbscript:`, and `data:` links/images (#41)
 - Fixed bug where app settings (themes, last folders) were not persisting across restarts due to missing config file permissions
+
+### Changed
+- **[A11y]** Added missing ARIA labels to folder tree interaction buttons (#55)
+- **[Performance]** Prevented mutating in-place `.sort()` during render in `FileTree` component (#37)
+- **[Dependencies]** Security bump `dompurify` (3.4.12) and `postcss` (8.5.23) (#38, #39)
 
 ## [1.4.0] - 2026-07-24
 
