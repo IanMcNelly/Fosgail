@@ -38,6 +38,7 @@ beforeEach(() => {
       wordWrap: true,
       activeThemeId: 'elegant-dark',
       customThemes: [],
+      sidebarWidth: 256,
     });
   });
 });
@@ -70,6 +71,25 @@ describe('useAppStore — file management', () => {
     act(() => { result.current.setFiles((prev) => [...prev, b]); });
 
     expect(result.current.files).toHaveLength(2);
+  });
+
+  it('renaming a draft file preserves file id and updates name correctly', () => {
+    const { result } = renderHook(() => useAppStore());
+    const draft = makeFile({ id: 'draft-1', name: 'Draft_1234.md', isDirty: true, filePath: null });
+
+    act(() => { result.current.setFiles([draft]); });
+    act(() => { result.current.setActiveFileId('draft-1'); });
+
+    // Perform rename in store
+    act(() => {
+      result.current.setFiles((prev) =>
+        prev.map((f) => (f.id === 'draft-1' ? { ...f, name: 'MyRenamedNote.md', isDirty: true } : f))
+      );
+    });
+
+    expect(result.current.files[0].id).toBe('draft-1');
+    expect(result.current.files[0].name).toBe('MyRenamedNote.md');
+    expect(result.current.activeFileId).toBe('draft-1');
   });
 });
 
@@ -248,3 +268,20 @@ describe('useAppStore — workspace', () => {
     expect(result.current.folders).toHaveLength(2);
   });
 });
+
+// -------------------------------------------------------
+// Sidebar width
+// -------------------------------------------------------
+describe('useAppStore — sidebar width', () => {
+  it('sidebarWidth defaults to 256', () => {
+    const { result } = renderHook(() => useAppStore());
+    expect(result.current.sidebarWidth).toBe(256);
+  });
+
+  it('setSidebarWidth updates sidebarWidth', () => {
+    const { result } = renderHook(() => useAppStore());
+    act(() => { result.current.setSidebarWidth(320); });
+    expect(result.current.sidebarWidth).toBe(320);
+  });
+});
+

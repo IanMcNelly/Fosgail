@@ -41,6 +41,8 @@ interface SidebarProps {
   scanErrors?: string[];
   onRefreshWorkspace: () => void;
   onNewWindow: () => void;
+  sidebarWidth?: number;
+  onResizeSidebar?: (width: number) => void;
 }
 
 export default function Sidebar({
@@ -60,16 +62,59 @@ export default function Sidebar({
   scanErrors,
   onRefreshWorkspace,
   onNewWindow,
+  sidebarWidth = 256,
+  onResizeSidebar,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isResizing, setIsResizing] = useState(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startWidth = sidebarWidth;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const newWidth = Math.max(180, Math.min(500, startWidth + deltaX));
+      if (onResizeSidebar) {
+        onResizeSidebar(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
 
   if (!isSidebarOpen) return null; // kept for safety
 
   return (
     <div 
       id="desktop-sidebar-rail"
-      className={`w-64 border-r overflow-y-auto shrink-0 flex flex-col h-full transition-all duration-300 ${themeInfo.sidebarBg}`}
+      style={{ width: `${sidebarWidth}px` }}
+      className={`relative border-r shrink-0 flex flex-col h-full ${
+        isResizing ? 'select-none' : 'transition-all duration-150'
+      } ${themeInfo.sidebarBg}`}
     >
+      {/* Resizer handle */}
+      {onResizeSidebar && (
+        <div
+          id="sidebar-resizer"
+          role="separator"
+          aria-label="Resize Sidebar"
+          aria-valuenow={sidebarWidth}
+          onMouseDown={handleMouseDown}
+          onDoubleClick={() => onResizeSidebar(256)}
+          className="absolute top-0 -right-1 w-2 h-full cursor-col-resize hover:bg-emerald-500/50 active:bg-emerald-500 z-30 transition-colors"
+          title="Drag to resize sidebar (Double-click to reset)"
+        />
+      )}
 
 
 

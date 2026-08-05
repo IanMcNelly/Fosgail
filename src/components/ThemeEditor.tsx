@@ -281,6 +281,7 @@ export default function ThemeEditor({
                       onClick={(e) => handleDelete(theme.id, e)}
                       className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-rose-500 transition-opacity p-0.5 rounded cursor-pointer"
                       title="Delete Theme"
+                      aria-label="Delete Theme"
                     >
                       <Trash2 size={13} />
                     </button>

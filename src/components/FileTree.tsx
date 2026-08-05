@@ -91,6 +91,15 @@ export default function FileTree({
     }));
   };
 
+  // ⚡ Bolt Optimization: Calculate a structural hash of the files array.
+  // Since 'files' is updated on every keystroke (for content/word counts),
+  // depending on it directly causes the entire FileTree to rebuild on every keystroke.
+  // By hashing just the properties that affect the tree structure, we prevent
+  // expensive re-renders and input lag during rapid typing.
+  const fileStructureHash = useMemo(() =>
+    files.map(f => `${f.id}:${f.name}:${f.folder || ''}`).join('|'),
+  [files]);
+
   // Build filtered or raw tree representation
   const tree = useMemo(() => {
     // Filter files based on search first
@@ -184,7 +193,12 @@ export default function FileTree({
     sortTree(root);
 
     return root;
-  }, [files, folders, searchQuery]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileStructureHash, folders, searchQuery]); // Ignore 'files' warning as we intentionally depend on the hash
+
+  // Create a fast O(1) lookup map for files so that renderFileItem always accesses
+  // the latest file properties (wordCount, isDirty) even if the tree node has a stale reference.
+  const fileMap = useMemo(() => new Map(files.map(f => [f.id, f])), [files]);
 
   // Handle new folder submit
   const handleCreateFolder = (e: React.FormEvent) => {
@@ -269,7 +283,7 @@ export default function FileTree({
                 <button
                   type="button"
                   title="New File in Folder"
-                  aria-label="New file in folder"
+                  aria-label="New File in Folder"
                   onClick={(e) => {
                     e.stopPropagation();
                     setExpandedFolders((prev) => ({ ...prev, [node.fullPath]: true }));
@@ -282,7 +296,7 @@ export default function FileTree({
                 <button
                   type="button"
                   title="New Subfolder"
-                  aria-label="New subfolder"
+                  aria-label="New Subfolder"
                   onClick={(e) => {
                     e.stopPropagation();
                     setExpandedFolders((prev) => ({ ...prev, [node.fullPath]: true }));
@@ -296,7 +310,7 @@ export default function FileTree({
                 <button
                   type="button"
                   title="Delete Folder"
-                  aria-label="Delete folder"
+                  aria-label="Delete Folder"
                   onClick={(e) => {
                     e.stopPropagation();
                     setConfirmDeletePath(node.fullPath);
@@ -361,14 +375,15 @@ export default function FileTree({
 
   // Render a single file row item
   const renderFileItem = (file: MarkdownFile, depth: number) => {
-    const isActive = file.id === activeFileId;
-    const isConfirmingDelete = confirmDeleteFileId === file.id;
+    const currentFile = fileMap.get(file.id) || file;
+    const isActive = currentFile.id === activeFileId;
+    const isConfirmingDelete = confirmDeleteFileId === currentFile.id;
 
     return (
       <div
-        key={file.id}
-        id={`file-row-${file.id}`}
-        onClick={() => onSelectFile(file.id)}
+        key={currentFile.id}
+        id={`file-row-${currentFile.id}`}
+        onClick={() => onSelectFile(currentFile.id)}
         className={`group relative flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] origin-left ${
           isActive
             ? themeInfo.activeFileBg
@@ -383,13 +398,13 @@ export default function FileTree({
           />
           <div className="truncate text-xs leading-tight">
             <div className="font-semibold flex items-center truncate">
-              <span className="truncate">{file.name}</span>
-              {file.isDirty && <span className="ml-1.5 shrink-0 inline-block w-1.5 h-1.5 rounded-full bg-orange-400" title="Unsaved changes"></span>}
+              <span className="truncate">{currentFile.name}</span>
+              {currentFile.isDirty && <span className="ml-1.5 shrink-0 inline-block w-1.5 h-1.5 rounded-full bg-orange-400" title="Unsaved changes"></span>}
             </div>
             <div className="text-[8px] text-neutral-400 flex items-center gap-1.5 mt-0.5">
-              <span>{file.wordCount} words</span>
-              {file.isExample && <span className="px-1.5 py-0.2 text-[7px] text-accent/80 bg-accent/10 rounded">Sample</span>}
-              {workspacePath && file.filePath && !file.filePath.startsWith(workspacePath) && <span className="px-1.5 py-0.2 text-[7px] text-orange-500/80 bg-orange-500/10 rounded border border-orange-500/20">External</span>}
+              <span>{currentFile.wordCount} words</span>
+              {currentFile.isExample && <span className="px-1.5 py-0.2 text-[7px] text-accent/80 bg-accent/10 rounded">Sample</span>}
+              {workspacePath && currentFile.filePath && !currentFile.filePath.startsWith(workspacePath) && <span className="px-1.5 py-0.2 text-[7px] text-orange-500/80 bg-orange-500/10 rounded border border-orange-500/20">External</span>}
             </div>
           </div>
         </div>
@@ -399,10 +414,10 @@ export default function FileTree({
           <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
             <span className="text-[9px] text-rose-500 font-mono font-bold mr-0.5">Delete?</span>
             <button
-              id={`btn-confirm-delete-file-${file.id}`}
+              id={`btn-confirm-delete-file-${currentFile.id}`}
               type="button"
               onClick={() => {
-                onDeleteFile(file.id);
+                onDeleteFile(currentFile.id);
                 setConfirmDeleteFileId(null);
               }}
               className="p-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white cursor-pointer"
@@ -422,11 +437,11 @@ export default function FileTree({
         ) : (
           /* Delete action button */
           <button
-            id={`btn-delete-file-${file.id}`}
+            id={`btn-delete-file-${currentFile.id}`}
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              setConfirmDeleteFileId(file.id);
+              setConfirmDeleteFileId(currentFile.id);
               setConfirmDeletePath(null);
             }}
             className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-rose-500 transition-opacity p-0.5 rounded cursor-pointer hover:bg-neutral-200/50 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-accent focus:outline-none"

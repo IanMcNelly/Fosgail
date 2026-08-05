@@ -26,6 +26,7 @@ interface AppState {
   isSyncScrollEnabled: boolean;
   isOutlinePanelOpen: boolean;
   isAutoSaveEnabled: boolean;
+  sidebarWidth: number;
 
   // Actions
   setFiles: (files: MarkdownFile[] | ((prev: MarkdownFile[]) => MarkdownFile[])) => void;
@@ -44,6 +45,7 @@ interface AppState {
   setIsSyncScrollEnabled: (val: boolean | ((prev: boolean) => boolean)) => void;
   setIsOutlinePanelOpen: (val: boolean | ((prev: boolean) => boolean)) => void;
   setIsAutoSaveEnabled: (val: boolean | ((prev: boolean) => boolean)) => void;
+  setSidebarWidth: (width: number | ((prev: number) => number)) => void;
 }
 
 // Helper to handle function updates or value updates
@@ -72,6 +74,7 @@ export const useAppStore = create<AppState>()(
       isSyncScrollEnabled: true,
       isOutlinePanelOpen: false,
       isAutoSaveEnabled: true,
+      sidebarWidth: 256,
 
       setFiles: (update) => set({ files: applyUpdate(update, get().files) }),
       setActiveFileId: (id) => {
@@ -97,6 +100,7 @@ export const useAppStore = create<AppState>()(
       setIsSyncScrollEnabled: (update) => set({ isSyncScrollEnabled: applyUpdate(update, get().isSyncScrollEnabled) }),
       setIsOutlinePanelOpen: (update) => set({ isOutlinePanelOpen: applyUpdate(update, get().isOutlinePanelOpen) }),
       setIsAutoSaveEnabled: (update) => set({ isAutoSaveEnabled: applyUpdate(update, get().isAutoSaveEnabled) }),
+      setSidebarWidth: (update) => set({ sidebarWidth: applyUpdate(update, get().sidebarWidth) }),
     }),
     {
       name: 'fosgail-storage',

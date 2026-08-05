@@ -55,6 +55,7 @@ export default function App() {
     isSyncScrollEnabled, setIsSyncScrollEnabled,
     isOutlinePanelOpen, setIsOutlinePanelOpen,
     isAutoSaveEnabled, setIsAutoSaveEnabled,
+    sidebarWidth, setSidebarWidth,
   } = useAppStore();
 
   // File drag & drop active marker
@@ -747,6 +748,14 @@ export default function App() {
         alert(`Failed to rename file: ${e}`);
         return;
       }
+    } else if (workspacePath) {
+      const folderPrefix = currentFile.folder ? `${currentFile.folder}/` : '';
+      newFilePath = normalizePath(`${workspacePath}/${folderPrefix}${safeName}`);
+      try {
+        await writeTextFile(newFilePath, currentFile.content);
+      } catch (e) {
+        console.error('Failed to write renamed draft file to disk', e);
+      }
     }
 
     setFiles((prev) =>
@@ -890,24 +899,57 @@ export default function App() {
       await scanDirectory(workspacePath, '');
 
       if (newFiles.length > 0) {
-        setFiles(newFiles);
-        // Keep active file if it still exists
-        const currentActive = useAppStore.getState().activeFileId;
-        const oldActiveFile = existingFiles.find(f => f.id === currentActive);
+        const oldFiles = useAppStore.getState().files;
         
-        const stillExists = oldActiveFile ? newFiles.find(f => f.filePath === oldActiveFile.filePath || (f.name === oldActiveFile.name && f.folder === oldActiveFile.folder)) : null;
-        const targetActiveId = stillExists ? stillExists.id : newFiles[0].id;
+        // Preserve IDs and unsaved status for existing files
+        const mergedFiles = newFiles.map(newF => {
+          const match = oldFiles.find(oldF => 
+            (oldF.filePath && oldF.filePath === newF.filePath) ||
+            (oldF.name === newF.name && oldF.folder === newF.folder)
+          );
+          if (match) {
+            return {
+              ...newF,
+              id: match.id,
+              content: match.isDirty ? match.content : (match.isLoaded ? match.content : newF.content),
+              isDirty: match.isDirty,
+              isLoaded: match.isLoaded || newF.isLoaded,
+            };
+          }
+          return newF;
+        });
+
+        // Keep unsaved draft files that aren't on disk
+        const unsavedDrafts = oldFiles.filter(oldF => !oldF.filePath || oldF.isDirty);
+        const mergedPaths = new Set(mergedFiles.map(f => f.filePath).filter(Boolean));
+        const draftsToKeep = unsavedDrafts.filter(d => !d.filePath || !mergedPaths.has(d.filePath));
+
+        const finalFiles = [...draftsToKeep, ...mergedFiles];
+        setFiles(finalFiles);
+
+        // Keep active file if it still exists or select first available
+        const currentActive = useAppStore.getState().activeFileId;
+        const oldActiveFile = oldFiles.find(f => f.id === currentActive);
+        
+        const stillExists = oldActiveFile ? finalFiles.find(f => f.id === oldActiveFile.id || (f.filePath && f.filePath === oldActiveFile.filePath) || (f.name === oldActiveFile.name && f.folder === oldActiveFile.folder)) : null;
+        const targetActiveId = stillExists ? stillExists.id : finalFiles[0].id;
 
         // Clean up stale IDs in recentlyViewedIds
-        const validIds = new Set(newFiles.map(f => f.id));
+        const validIds = new Set(finalFiles.map(f => f.id));
         const updatedRecentlyViewed = useAppStore.getState().recentlyViewedIds.filter(id => validIds.has(id));
         setRecentlyViewedIds(updatedRecentlyViewed.length > 0 ? updatedRecentlyViewed : [targetActiveId]);
 
         handleSelectFile(targetActiveId);
       } else {
-        setFiles([]);
-        setActiveFileId(null);
-        setRecentlyViewedIds([]);
+        const oldFiles = useAppStore.getState().files;
+        const unsavedDrafts = oldFiles.filter(oldF => !oldF.filePath || oldF.isDirty);
+        setFiles(unsavedDrafts);
+        if (unsavedDrafts.length > 0) {
+          handleSelectFile(unsavedDrafts[0].id);
+        } else {
+          setActiveFileId(null);
+          setRecentlyViewedIds([]);
+        }
       }
       setFolders(Array.from(newFolders));
       setScanErrors(errors);
@@ -1128,6 +1170,7 @@ export default function App() {
               className={`p-1.5 rounded-md transition-colors ${isOutlinePanelOpen ? 'bg-accent text-accent dark:bg-accent/20 dark:text-accent' : 'text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-800'}`}
               onClick={() => setIsOutlinePanelOpen(!isOutlinePanelOpen)}
               title="Document Outline"
+              aria-label="Document Outline"
               type="button"
             >
               <List size={16} />
@@ -1139,6 +1182,7 @@ export default function App() {
               className={`p-1.5 rounded-md transition-colors text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-800`}
               onClick={() => setIsZenMode(true)}
               title="Enter Zen Mode (Cmd+Esc)"
+              aria-label="Enter Zen Mode (Cmd+Esc)"
               type="button"
             >
               <Maximize2 size={16} />
@@ -1179,6 +1223,8 @@ export default function App() {
                 scanErrors={scanErrors}
                 onRefreshWorkspace={handleRefreshWorkspace}
                 onNewWindow={handleNewWindow}
+                sidebarWidth={sidebarWidth}
+                onResizeSidebar={setSidebarWidth}
               />
             </motion.div>
           )}
@@ -1450,6 +1496,7 @@ export default function App() {
           onClick={() => setIsZenMode(false)}
           className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-neutral-600 dark:text-neutral-300 bg-white/95 dark:bg-zinc-900/95 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg cursor-pointer transition-all hover:scale-105 active:scale-95"
           title="Exit Zen Mode (Escape)"
+          aria-label="Exit Zen Mode (Escape)"
         >
           <Minimize2 size={12} className="text-accent" />
           <span>Exit Zen</span>
